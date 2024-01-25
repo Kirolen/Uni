@@ -1,0 +1,392 @@
+#include <iostream>
+#include <string>
+#include <fstream>
+#include <vector>
+
+using namespace std;
+
+//Структури
+struct date
+{
+    int year;
+    int month;
+    int day;
+    int hour;
+    int minute;
+    int second;
+
+    int dayInMonth(int month); //Функція для визначення кількості днів в місяці
+
+    //Функція запиту дати від користувача та перевірка кожного значення на правилність
+    void getDate()
+    {
+        cout << "Enter year: ";
+        cin >> this->year;
+        do
+        {
+            cout << "Enter month: ";
+            cin >> this->month;
+        } 
+        while (this->month > 12 || this->month < 1);
+        do
+        {
+            cout << "Enter day: ";
+            cin >> this->day;
+        } 
+        while (this->day > dayInMonth(this->month) || this->day < 1);
+        do
+        {
+            cout << "Enter hour: ";
+            cin >> this->hour;
+        } 
+        while (this->hour > 24 || this->hour < 0);
+        do
+        {
+            cout << "Enter minute: ";
+            cin >> this->minute;
+        }
+        while (this->minute > 60 || this->hour < 0);
+        do
+        {
+            cout << "Enter second: ";
+            cin >> this->second;
+        } while (this->hour > 60 || this->hour < 0);
+    }
+    
+    //Функція зручного виводу дати та часу
+    void printDate()
+    {
+        cout << "Date: " << this->year << "." << this->month << "." << this->day << "\n";
+        cout << "Time: " << this->hour << ":" << this->minute << ":" << this->second << "\n";
+    }
+};
+
+struct Product
+{
+    int id;
+    string name;
+    string unit;
+    double quantity;
+    date production_date;
+    int shelf_life;
+
+    //Функція для отримання данних про товар від користувача
+    void getInfo()
+    {
+        cout << "Enter name: ";
+        cin >> this->name;
+        do
+        {
+            cout << "Enter type of unit(kg, liter, package, piece): ";
+            cin >> this->unit;
+        }
+        while (this->unit != "kg" && this->unit != "liter" && this->unit != "package" && this->unit != "piece");
+        cout << "Enter quantity: ";
+        cin >> this->quantity;
+        production_date.getDate();
+        do
+        {
+            cout << "Enter shelf life(in days. Days must be less than 3660): ";
+            cin >> this->shelf_life;
+        } while (this->shelf_life < 0 || this->shelf_life > 3660);
+    }
+
+    //Функція для виведення данних про товар для користувача
+    void printInfo()
+    {
+        cout << "Id: " << this->id << "\n";
+        cout << "Name: " << this->name <<"\n";
+        cout << "Unit: " << this->unit << "\n";
+        cout << "Quantity: " << this->quantity << "\n";
+        production_date.printDate();
+        cout << "Shelf life: " << this->shelf_life << "\n";
+    }
+};
+
+struct unitDiaposone
+{
+    double start;
+    double finish;
+};
+
+//Функції винисені за структуру
+int date::dayInMonth(int month)
+{
+    switch (month)
+    {
+    case 1: case 3: case 5: case 7: case 8: case 10: case 12:
+        return 31;
+    case 4: case 6: case 9: case 11:
+        return 30;
+    case 2:
+        return (year % 4 == 0 && (year % 100 != 0 || year % 400 == 0)) ? 29 : 28;
+    default:
+        return -1;  // Повертаємо -1 у випадку некоректного місяця
+    }
+}
+
+//Функції
+//Функції для текстової бази данних
+void txtDatabaseManagement();//Функція керування датабазою у вигляді файлу
+void addElement(vector<Product>& database, int& idCounter);
+void recordDatabase(const vector<Product>& database, const string& filename);
+void readElement(const string& filename);
+void readAllDatabase(const string& filename);
+void searchElements(const string& filename);
+
+int main()
+{
+    cout << "Hi! It`s data base our magazine! Select the operating mode:\n";
+    int mode;
+    cout << "1. Datebase management\n2. Demontstration mode \n3. Benchmark \n";
+    cout << "Please enter a number of mode: ";
+    do 
+    {
+        cin >> mode;
+    } while (mode < 1 || mode > 4);
+    
+    if (mode == 1)
+    {
+        cout << "\nOkay! Next enter a mode of datebase management:\n";
+        cout << "1. Vector Database \n2. Txt File Database\n3. Bin File Database \n";
+        cout << "Please enter a number of mode: ";
+        int modeManagement;
+        cin >> modeManagement;
+        if (modeManagement == 2)
+        {
+            txtDatabaseManagement();
+        }
+    }
+}
+
+void txtDatabaseManagement()
+{
+    const string filename = "database.txt";
+    ofstream outputFile(filename, ios::app );
+
+    if (!outputFile.is_open())
+    {
+        cerr << "Error opening the file " << filename << "\n";
+        return;
+    }
+
+    bool manage = true;
+    vector<Product> database; //Масив для збереження тимчасових елементів
+    int idCounter = 1;
+
+    while (manage)
+    {
+        cout << "\nHere you can manage the text database. Please select a operation: \n";
+        cout << "1. Add element\n2. Record date\n3. Read date\n4. Read all database\n5. Searh element\n";
+        cout << "Please enter a number of operation: ";
+        int operation;
+        cin >> operation;
+
+        switch(operation)
+        {
+            case 1:
+                addElement(database, idCounter);
+                break;
+            case 2: 
+                recordDatabase(database, filename);
+                break;
+            case 3:
+                readElement(filename);
+                break;
+            case 4:
+                readAllDatabase(filename);
+                break;
+            case 5:
+                searchElements(filename);
+                break;
+        }
+    }
+    
+
+    cout << "Text database file '" << filename << "' has been created/updated.\n";
+
+    outputFile.close();
+}
+
+void addElement(vector<Product>& database, int& idCounter)
+{
+    Product newProduct;
+    newProduct.id = idCounter++;
+    newProduct.getInfo();
+    database.push_back(newProduct);
+    cout << "Product added successfully.\n";
+}
+
+void recordDatabase(const vector<Product>& database, const string& filename)
+{
+    ofstream outputFile(filename);
+
+    if (!outputFile.is_open())
+    {
+        cerr << "Error opening the file " << filename << "\n";
+        return;
+    }
+
+    for (const Product& product : database)
+    {
+        outputFile << product.id << ' ' << product.name << ' ' << product.unit << ' ' << product.quantity << ' ';
+        outputFile << product.production_date.year << ' ' << product.production_date.month << ' ' << product.production_date.day << ' ';
+        outputFile << product.production_date.hour << ' ' << product.production_date.minute << ' ' << product.production_date.second << ' ';
+        outputFile << product.shelf_life << '\n';
+    }
+
+    cout << "Database has been recorded to the file '" << filename << "'.\n";
+
+    outputFile.close();
+}
+
+void readAllDatabase(const string& filename)
+{
+    ifstream readFile(filename);
+
+    if (!readFile.is_open())
+    {
+        cerr << "Error opening the file " << filename << "\n";
+        return;
+    }
+
+    Product product;
+    while (readFile >> product.id >> product.name >> product.unit >> product.quantity
+        >> product.production_date.year >> product.production_date.month >> product.production_date.day
+        >> product.production_date.hour >> product.production_date.minute >> product.production_date.second
+        >> product.shelf_life)
+    {
+        cout << "\n";
+        product.printInfo();
+        cout << "\n";
+    }
+
+    cout << "Database has been read from the file " << filename << ".\n";
+
+    readFile.close();
+}
+
+void readElement(const string& filename)
+{
+    ifstream readFile(filename);
+
+    if (!readFile.is_open())
+    {
+        cerr << "Error opening the file " << filename << "\n";
+        return;
+    }
+
+    int idElement;
+    cout << "Enter id element which you want to see: ";
+    cin >> idElement;
+
+    Product product;
+    bool found = false;
+
+    while (readFile >> product.id)
+    {
+        if (product.id == idElement)
+        {
+            readFile >> product.name >> product.unit >> product.quantity
+                    >> product.production_date.year >> product.production_date.month >> product.production_date.day
+                    >> product.production_date.hour >> product.production_date.minute >> product.production_date.second
+                    >> product.shelf_life;
+            cout << "\n";
+            product.printInfo();
+            cout << "\n";
+            found = true;
+            break; 
+        }
+        else
+        {
+            // Перейти до іншого елементу
+            readFile.ignore(numeric_limits<streamsize>::max(), '\n');
+        }
+    }
+
+    if (!found)
+    {
+        cout << "Element with ID " << idElement << " not found in the database '" << filename << "'.\n";
+    }
+
+    readFile.close();
+}
+
+void searchElements(const string& filename) {
+    vector<Product> allCoincidence;
+
+    string fragment;
+    unitDiaposone range;
+    date startDate;
+
+    int criterion;
+    bool name = false, numOfUnit = false, date = false;
+
+    do {
+        cout << "Select criterion:\n";
+        cout << "1. Name\n2. Numbers of units\n3. Date\n";
+        cout << "Please, enter a number criterion or `0` for exit: ";
+        cin >> criterion;
+
+        switch (criterion) {
+        case 0:
+            break;
+        case 1:
+            cout << "Enter a name of product: ";
+            cin >> fragment;
+            name = true;
+            break;
+        case 2:
+            cout << "Enter a range units:\n";
+            cout << "Enter the smallest value: ";
+            cin >> range.start;
+            cout << "Enter the greatest value: ";
+            cin >> range.finish;
+            numOfUnit = true;
+            break;
+        case 3:
+            cout << "Enter start date (YYYY MM DD HH MM SS): ";
+            startDate.getDate();
+            date = true;
+            break;
+        default:
+            cerr << "You entered a wrong number\n";
+            break;
+        }
+    }
+    while (criterion != 0);
+
+    if (!name && !numOfUnit && !date) {
+        cout << "You didn't select any criterion\n";
+        return;
+    }
+
+    ifstream readFile(filename);
+
+    if (!readFile.is_open()) {
+        cerr << "Error opening the file " << filename << "\n";
+        return;
+    }
+
+    Product product;
+    while (readFile >> product.id >> product.name >> product.unit >> product.quantity
+           >> product.production_date.year >> product.production_date.month >> product.production_date.day
+           >> product.production_date.hour >> product.production_date.minute >> product.production_date.second
+           >> product.shelf_life) 
+    {
+
+        if ((name && product.name.find(fragment) != 0) || 
+            (numOfUnit && (product.quantity > range.finish || product.quantity < range.start)))
+        {
+            continue;  
+        }
+        allCoincidence.push_back(product);
+    }
+
+    for (auto& p : allCoincidence)
+    {
+        cout << "\n";
+        p.printInfo();
+        cout << "\n";
+    }
+}
