@@ -5,6 +5,7 @@
 #include <cstdlib>
 #include <ctime>
 #include <chrono>
+#include <thread>
 
 using namespace std;
 
@@ -154,6 +155,8 @@ void delElement(vector<Product>& bufferDatabase);
 void VectorDatabase();
 
 void benchmarkMode();
+void demonstrationMode();
+
 Product generateRandomElement();
 string generateString(int len);
 date getRandomDate();
@@ -188,6 +191,9 @@ int main()
                     cerr << "Error! You enter incoretct database\n";
                     break;
             }
+            break;
+        case 2:
+            demonstrationMode();
             break;
         case 3:
             benchmarkMode();
@@ -607,6 +613,154 @@ void benchmarkMode()
 
     cout << "\n\n=== BENCHMARK OVER ===\n";
 
+}
+void demonstrationMode()
+{
+    bool manage = true;
+    vector<Product> bufferDatabase, demonstationBase; // Масив для збереження тимчасових елементів
+    cout << "\n=== START DEMONSTRATION ===\n";
+    cout << "\n\n--- Let's add 5 elements ---\n\n";
+
+    string mode = "\nOperation:\n"
+        "0. Exit\n"
+        "1. Add element to database\n"
+        "2. Record date to file\n"
+        "3. Restore database\n"
+        "4. Output database\n"
+        "5. Search for a product by criteria\n"
+        "6. Modify an element\n"
+        "7. Delete database or element\n"
+        "Enter operation: ";
+
+    string modeSearch = "\nSelect criterion:\n"
+                        "1.Name\n"
+                        "2.Numbers of units\n"
+                        "3.Date\n"
+                        "Please, enter a number criterion or `0` for exit:";
+
+    cout << mode;
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+    cout << "1\n";
+
+    for (int i = 0; i < 5; i++)
+    {
+        cout << "\n=== " << i + 1 << " element generated! ===\n";
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+        addElement(bufferDatabase, true, false);
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+    }
+
+    cout << "\n\n--- Let's save the database ---\n\n";
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+    cout << mode;
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+    cout << "2\n";
+    demonstationBase = bufferDatabase;
+    cout << "\n=== Database was saved successfully ===\n";
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+
+    cout << "\n\n--- Let's record the database ---\n\n";
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+    cout << mode;
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+    cout << "3\n";
+    bufferDatabase = demonstationBase;
+    cout << "\n=== Database was recorded successfully ===\n";
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+
+    cout << "\n\n--- Let's output the database ---\n\n";
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+    cout << mode;
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+    cout << "4\n";
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+    readAllDatabase(bufferDatabase);
+    cout << "\n=== Database was read successfully ===\n";
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+
+    cout << "\n\n--- Let's search all elements starting with the letter 'a' and with quantity between 0 - 100 in the database ---\n\n";
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+    cout << mode;
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+    cout << "5\n";;
+    std::this_thread::sleep_for(std::chrono::seconds(1));;
+    cout << modeSearch << " 1";
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+    cout << "Enter a name of product: a\n";
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+    cout << modeSearch << " 2\n";
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+    cout << "Enter the smallest value: 0\n";
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+    cout << "Enter the greatest value : 100\n";
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+    cout <<  modeSearch <<" 0\n";
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+    vector<Product> name = search(bufferDatabase, true, "a", true, 0, 100, false, { 0 });
+    if (name.empty() != 0)
+    {
+        cout << "\n### Elements not founded! ###\n";
+    }
+    else
+    {
+        cout << "\nAll founded elements: \n";
+        for (auto& p : name)
+        {
+            p.printInfo();
+        }
+    }
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+
+    cout << "\n\n--- Let`s modify element by 1 id in database. Change name 'Milk' --- \n\n";
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+    cout << mode;
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+    cout << "6\n";
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+    cout << "\nWhat do you want to change ? \n0.Nothing\n1.Name\n2.Unit\n3.Quantity\n4.Production date\n5.shelf life\nEnter opetarion:";
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+    cout << "1\n";
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+    cout << "Enter a new name: Milk\n";
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+    cout << "\n=== Name changed succesfully!=== \n";
+    bufferDatabase[0].name = "Milk";
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+
+    cout << "\n\n--- Let's delete the element with ID 5 in the database ---\n\n";
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+    cout << mode << "Enter operation: 7\nSelect operation for deletion:\n0. Exit\n1. Delete element by ID\n2. Delete all data in the database\nEnter operation:";
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+    cout << "1\n";
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+    cout << "Enter an ID for the element to be deleted: 5\n";
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+    cout << "\n=== Element with ID 5 was deleted ===\n";
+    bufferDatabase.erase(bufferDatabase.begin() + 4);
+
+    cout << "\n\n--- Let's save the database again ---\n\n";
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+    cout << mode;
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+    cout << "2\n";;
+    demonstationBase = bufferDatabase;
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+    cout << "\n=== Database was saved successfully ===\n";
+
+    cout << "\n\n--- Let's output the database again ---\n\n";
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+    cout << mode;
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+    cout << "4\n";;
+    readAllDatabase(bufferDatabase);
+    cout << "\n=== Database was read successfully ===\n";
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+
+    cout << "\n\n--- Let's exit ---\n\n";
+    cout << mode;
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+    cout << "5\n";
+    cout << "\n=== DATABASE CLOSE ===";
 }
 
 Product generateRandomElement()
