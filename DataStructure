@@ -1,0 +1,515 @@
+#include <iostream>
+
+const int SIZE = 5;
+
+using namespace std;
+
+struct point
+{
+	double x, y, z;
+
+	friend ostream& operator<<(ostream& os, const point& object)
+	{
+		os << "x: " << object.x << " y: " << object.y << " z: " << object.z;
+		return os;
+	}
+
+	bool operator ==(const point& object)
+	{
+		return (object.x == this->x) && (object.y == this->y) && (object.z == this->z);
+	}
+};
+
+template <typename T>
+class ListArr
+{
+private:
+	T arrData[SIZE];
+	int arrSize;
+
+public:
+	ListArr() 
+	{
+		arrSize = 0;
+	}
+
+	void append(T data) {
+		if (arrSize == SIZE) 
+		{
+			cerr << "\n\n### Error: List is full!###\n\n";
+			return;
+		}
+		arrData[arrSize++] = data;
+	}
+
+	void insert(T data, int index)
+	{
+		if (index < 0 || index >= SIZE)
+		{
+			cerr << "\n### Error: incorect index! ###\n";
+			return;
+		}
+		else if (arrSize == SIZE) 
+		{
+			cerr << "\n### Error: List is full!###\n";
+			return;
+		}
+		for (int i = arrSize; i > index; i--)
+		{
+			arrData[i] = arrData[i - 1];
+		}
+		arrData[index] = data;
+		arrSize++;
+	}
+
+	void remove(int index)
+	{
+		if (index < 0 || index >= arrSize)
+		{
+			cerr << "\n### Error: incorect index! ###\n";
+			return;
+		}
+		for (int i = index; i < arrSize - 1; i++) 
+		{
+			arrData[i] = arrData[i + 1];
+		}
+		arrSize--;
+	}
+
+	T get(int index)
+	{
+		if (index < 0 || index >= arrSize)
+		{
+			throw out_of_range("\n### Error: incorect index! ###\n");
+		}
+		return arrData[index];
+		
+	}
+
+	void set(T data, int index) {
+		if (index < 0 || index >= arrSize) {
+			cout << "\n### Error: incorect index! ###\n";
+			return;
+		}
+		arrData[index] = data;
+	}
+	
+	int lenght()
+	{
+		return arrSize;
+	}
+
+	int find(T data) {
+		for (int i = 0; i < arrSize; i++) {
+			if (arrData[i] == data) {
+				return i;
+			}
+		}
+		return -1;
+	}
+
+	bool isEmpty()
+	{
+		return arrSize == 0;
+	}
+
+	void print() 
+	{
+		for (int i = 0; i < arrSize; i++) {
+			cout << arrData[i] << "\n";
+		}
+		cout << endl;
+	}
+};
+
+template <typename T>
+class dynamicArr
+{
+private:
+	T* dataArr;
+	int size;
+
+public:
+	dynamicArr()
+	{
+		dataArr = nullptr;
+		size = 0;
+	}
+
+	void append (T data)
+	{
+		int newSize = size + 1;
+		T* newDataArr = new T[newSize];
+		for (int i = 0; i < size; i++)
+		{
+			newDataArr[i] = dataArr[i];
+		}
+		newDataArr[size] = data;
+		delete[] dataArr;
+		size++;
+		dataArr = newDataArr;
+	}
+
+	void insert(T data, int index)
+	{
+		if (index < 0 || index >= size)
+		{
+			cerr << "\n### Error: incorect index! ###\n";
+			return;
+		}
+
+		int newSize = size + 1;
+		T* newDataArr = new T[newSize];
+		for (int i = 0, j = 0; i < newSize; i++)
+		{
+			if (i == index) continue;
+			newDataArr[i] = dataArr[j++];
+		}
+		newDataArr[index] = data;
+		delete[] dataArr;
+		size++;
+		dataArr = newDataArr;
+	}
+
+	void remove(int index)
+	{
+		if (index < 0 || index >= size)
+		{
+			cerr << "\n### Error: incorect index! ###\n";
+			return;
+		}
+
+		int newSize = size - 1;
+		T* newDataArr = new T[newSize];
+		for (int i = 0, j = 0; i < size; i++)
+			{
+				if (i == index) continue;
+				newDataArr[j++] = dataArr[i];
+			}
+			delete[] dataArr;
+			size--;
+			dataArr = newDataArr;
+	}
+
+	T get(int index)
+	{
+		if (index < 0 || index >= size)
+		{
+			throw out_of_range("\n### Error: incorect index! ###\n");
+		}
+		return dataArr[index];
+
+	}
+
+	void set(T data, int index) {
+		if (index < 0 || index >= size) {
+			cout << "\n### Error: incorect index! ###\n";
+			return;
+		}
+		dataArr[index] = data;
+	}
+
+	int lenght()
+	{
+		return size;
+	}
+
+	int find(T data) {
+		for (int i = 0; i < size; i++) {
+			if (dataArr[i] == data) {
+				return i;
+			}
+		}
+		return -1;
+	}
+
+	void print()
+	{
+		for (int i = 0; i < size; i++)
+		{
+			cout << dataArr[i] << "\n";
+		}
+	}
+
+	bool isEmpty()
+	{
+		return size == 0;
+	}
+
+	~dynamicArr()
+	{
+		delete[] dataArr;
+	}
+};
+
+template <typename T>
+class List
+{
+private:
+	class Node
+	{
+	public:
+		T data;
+		Node* next;
+		Node(T data = T(),Node *next = nullptr)
+		{
+			this->data = data;
+			this->next = next;
+		}
+	};
+
+	Node* head;
+	int size;
+
+public:
+	List()
+	{
+		size = 0;
+		head = nullptr;
+	}
+
+	void append(T data)
+	{
+		if (head == nullptr)
+		{
+			head = new Node(data);
+			this->size++;
+		}
+		else
+		{
+			Node* current = this->head;
+			while (current->next != nullptr) current = current->next;
+			current->next = new Node(data);
+			this->size++;
+		}
+	}
+
+	void insert(T data, int index)
+	{
+		if (index < 0 || index > size)
+		{
+			cerr << "\n### Error: incorrect index! ###\n";
+			return;
+		}
+
+		if (index == 0)
+		{
+			head = new Node(data, head);
+			size++;
+			return;
+		}
+
+		Node* current = head;
+		for (int i = 0; i < index - 1; i++) { current = current->next; }
+		current->next = new Node(data, current->next);
+		size++;
+	}
+
+	void remove(int index)
+	{
+		if (index < 0 || index > size)
+		{
+			cerr << "\n### Error: incorrect index! ###\n";
+			return;
+		}
+
+		if (index == 0)
+		{
+			Node* headTemp = head->next;
+			delete head;
+			head = headTemp;
+			size--;
+			return;
+		}
+
+		int i = 0;
+		Node* current = head;
+		while (i != index - 1)
+		{
+			current = current->next;
+			i++;
+		}
+
+		Node* temp = current->next;
+		current->next = temp->next;
+		delete temp;
+		size--;
+	}
+
+	T get(int index)
+	{
+		if (index < 0 || index >= size)
+		{
+			throw out_of_range("\n### Error: incorect index! ###\n");
+		}
+
+		Node* current = head;
+		for (int i = 0; i < index - 1; i++) { current = current->next; }
+		return current->data;
+	}
+
+	void set(T data, int index) {
+		if (index < 0 || index >= size) {
+			cout << "\n### Error: incorect index! ###\n";
+			return;
+		}
+
+		Node* current = head;
+		for (int i = 0; i < index - 1; i++) { current = current->next; }
+		current->data = data;
+	}
+
+	int lenght()
+	{
+		return size;
+	}
+
+	int find(T data) 
+	{
+		Node* current = head;
+		for (int i = 0; i < size; i++) 
+		{
+			if (current->data == data) return i;
+			current = current->next;
+		}
+		return -1;
+	}
+
+	bool isEmpty()
+	{
+		return size == 0;
+	}
+
+	void print()
+	{
+		Node* current = this->head;
+		while (current != nullptr)
+		{
+			cout << current->data << "\n";
+			current = current->next;
+		}
+	}
+
+	~List()
+	{
+
+	}
+};
+
+void demonstrationMode();
+
+int main()
+{
+	demonstrationMode();
+}
+
+void demonstrationMode()
+{
+	cout << "\n=== DEMONSTRATION MODE ===\n";
+	/*cout << "\n=== FIXED SIZE ARRAY ===\n";
+	ListArr<point> first;
+	point a{ 0 }, b{ 1 }, c{ 3 };
+	first.append(a);
+	first.append(b);
+	first.append(c);
+	first.print();
+
+	first.remove(1);
+	first.print();
+
+	first.insert({ 5 }, 1);
+	first.print();
+
+	cout << "Get: " << first.get(0) << "\n";
+
+	first.set({ 10 }, 4);
+	first.print();
+
+	first.set({ 10 }, 2);
+	first.print();
+
+	cout << "Size: " << first.lenght() << "\n";
+	cout << "Index: " << first.find( { 10, 0, 0 } ) << "\n";
+	cout << "Index: " << first.find({ 8, 0, 0 }) << "\n";
+		*/
+	/*
+	cout << "\n=== DYNAMIC SIZE ARRAY ===\n";
+	dynamicArr<point> dynamic;
+	point a{ 1 }, b{ 2 }, c{ 3 };
+
+	dynamic.append(a);
+	dynamic.append(b);
+	dynamic.append(c);
+	dynamic.print();
+	cout << "\n";
+	dynamic.insert({ 10 }, 2);
+	dynamic.print();
+
+	cout << "\n";
+	dynamic.remove(1);
+	dynamic.print();
+
+	cout << "\n";
+	cout << "Get 0: " << dynamic.get(0) << "\n";
+
+
+	cout << "\n";
+	dynamic.set({ 100 }, 1);
+	dynamic.print();
+
+	cout << "\n";
+	cout << "Size: " << dynamic.lenght() << "\n";
+
+	cout << "\n";
+	cout << "Find (100, 0, 0): " << dynamic.find({100}) << "\n";
+
+	dynamic.isEmpty() ? cout << "Array is empty\n" : cout << "Array ism`t empty\n";
+	dynamic.remove(0);
+	dynamic.remove(0);
+	dynamic.remove(0);
+	dynamic.isEmpty() ? cout << "Array is empty\n" : cout << "Array ism`t empty\n";
+	*/
+	
+	cout << "\n=== LIST ===\n";
+	List<point> myList;
+	myList.append({ 1 });
+	myList.append({ 2 });
+	myList.append({ 3 });
+	myList.print();
+
+	cout << "\n";
+	myList.insert({ 100 }, 0);
+	myList.print();
+
+	cout << "\n";
+	myList.insert({ 50 }, 2);
+	myList.print();
+
+	cout << "\n";
+	myList.remove(2);
+	myList.print();
+
+	cout << "\n";
+	myList.remove(0);
+	myList.print();
+
+	cout << "\n";
+	cout << "Get 0: " << myList.get(0) << "\n";
+
+	cout << "\n";
+	cout << "Set 0:\n";
+	myList.set({0}, 0);
+	myList.print();
+
+	cout << "\n";
+	cout << "Size: " << myList.lenght() << "\n";
+
+	cout << "\n";
+	cout << "Find (3, 0, 0): " << myList.find({3}) << "\n";
+
+	myList.isEmpty() ? cout << "Array is empty\n" : cout << "Array ism`t empty\n";
+	myList.remove(0);
+	myList.remove(0);
+	myList.remove(0);
+	myList.isEmpty() ? cout << "Array is empty\n" : cout << "Array ism`t empty\n";
+}
