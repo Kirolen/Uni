@@ -1,8 +1,11 @@
 #include <iostream>
 #include <chrono>
 #include <thread>
+#include <cstdlib>
+#include <ctime>
+#include <cmath>
 
-const int SIZE = 5;
+const int SIZE = 40000;
 
 using namespace std;
 
@@ -72,7 +75,7 @@ public:
 	{
 		if (arrSize == SIZE) 
 		{
-			cerr << "\n\n### Error: List is full!###\n\n";
+			cerr << "\n\n### Error: List is full! ###\n\n";
 			return;
 		}
 		arrData[arrSize++] = data;
@@ -82,7 +85,7 @@ public:
 	{
 		if (index < 0 || index >= SIZE)
 		{
-			cerr << "\n### Error: incorect index! ###\n";
+			cerr << "\n### Error: incorrect index! ###\n";
 			return;
 		}
 		else if (arrSize == SIZE) 
@@ -102,7 +105,7 @@ public:
 	{
 		if (index < 0 || index >= arrSize)
 		{
-			cerr << "\n### Error: incorect index! ###\n";
+			cerr << "\n### Error: incorrect index! ###\n";
 			return;
 		}
 		for (int i = index; i < arrSize - 1; i++) { arrData[i] = arrData[i + 1]; }
@@ -111,14 +114,14 @@ public:
 
 	T get(int index)
 	{
-		if (index < 0 || index >= arrSize) { throw out_of_range("\n### Error: incorect index! ###\n"); }
+		if (index < 0 || index >= arrSize) { throw out_of_range("\n### Error: incorrect index! ###\n"); }
 		return arrData[index];
 	}
 
 	void set(T data, int index) 
 	{
 		if (index < 0 || index >= arrSize) {
-			cout << "\n### Error: incorect index! ###\n";
+			cout << "\n### Error: incotrect index! ###\n";
 			return;
 		}
 		arrData[index] = data;
@@ -177,7 +180,7 @@ public:
 	{
 		if (index < 0 || index >= size)
 		{
-			cerr << "\n### Error: incorect index! ###\n";
+			cout << "\n### Error: incotrect index! ###\n";
 			return;
 		}
 
@@ -198,7 +201,7 @@ public:
 	{
 		if (index < 0 || index >= size)
 		{
-			cerr << "\n### Error: incorect index! ###\n";
+			cout << "\n### Error: incotrect index! ###\n";
 			return;
 		}
 
@@ -216,14 +219,14 @@ public:
 
 	T get(int index)
 	{
-		if (index < 0 || index >= size) { throw out_of_range("\n### Error: incorect index! ###\n"); }
+		if (index < 0 || index >= size) { throw out_of_range("\n### Error: incorrect index! ###\n"); }
 		return dataArr[index];
 	}
 
 	void set(T data, int index) {
 		if (index < 0 || index >= size) 
 		{
-			cout << "\n### Error: incorect index! ###\n";
+			cout << "\n### Error: incotrect index! ###\n";
 			return;
 		}
 		dataArr[index] = data;
@@ -304,7 +307,7 @@ public:
 	{
 		if (index < 0 || index > size)
 		{
-			cerr << "\n### Error: incorrect index! ###\n";
+			cout << "\n### Error: incotrect index! ###\n";
 			return;
 		}
 
@@ -325,7 +328,7 @@ public:
 	{
 		if (index < 0 || index >= size)
 		{
-			cerr << "\n### Error: incorrect index! ###\n";
+			cout << "\n### Error: incotrect index! ###\n";
 			return;
 		}
 
@@ -354,7 +357,7 @@ public:
 
 	T get(int index)
 	{
-		if (index < 0 || index >= size) { throw out_of_range("\n### Error: incorect index! ###\n"); }
+		if (index < 0 || index >= size) { throw out_of_range("\n### Error: incorrect index! ###\n"); }
 		Node* current = head;
 		for (int i = 0; i < index-1; i++) { current = current->next; }
 		return current->data;
@@ -363,7 +366,7 @@ public:
 	void set(T data, int index) 
 	{
 		if (index < 0 || index >= size) {
-			cout << "\n### Error: incorect index! ###\n";
+			cout << "\n### Error: incorrect index! ###\n";
 			return;
 		}
 
@@ -417,13 +420,15 @@ public:
 
 void demonstrationMode();
 void interactiveMode();
+void benchmarkMode();
 
-
+point randomPoint();
 void menu();
 DataStructure selectDataStructure();
 
 int main()
 {
+	srand(time(NULL));
 	cout << "Program Mode\n"
 		"1. Interactive Mode\n"
 		"2. Demonstartion Mode\n"
@@ -439,6 +444,7 @@ int main()
 			demonstrationMode();
 			break;
 		case 3:
+			benchmarkMode();
 			break;
 		default:
 			cout << "\n### Invalid number! ###\n";
@@ -481,6 +487,11 @@ DataStructure selectDataStructure() {
 		return static_cast<DataStructure>(choice - 1);
 	}
 }
+point randomPoint()
+{
+	return { rand() / 10000.0, rand() / 10000.0, rand() / 10000.0, };
+}
+
 void demonstrationMode()
 {
 	cout << "\n=== DEMONSTRATION MODE ===\n";
@@ -655,4 +666,93 @@ void interactiveMode()
 		}
 
 	}
+}
+void benchmarkMode()
+{
+	cout << "\n=== BENCHMARK MODE ===\n";
+	ListArr<point> myArray;
+	dynamicArr<point> myDynamicArray;
+	List<point> myList;
+
+	int numOperation;
+	do { numOperation = getValidInput<int>("Enter a num of operation: "); } while (numOperation < 1 || numOperation > SIZE);
+	int tenPercentOperation = ceil(numOperation * 0.1);
+
+	for (int mode = 0; mode < 3; mode++)
+	{
+		this_thread::sleep_for(chrono::seconds(1));
+		if (mode == 0) cout << "\n\n=== BENCHMARK FIXED SIZE ARRAY ===\n";
+		else if (mode == 1) cout << "\n\n=== BENCHMARK DYNAMIC SIZE ARRAY ===\n";
+		else if (mode == 2) cout << "\n\n=== BENCHMARK LIST ===\n";
+
+		auto startTime = chrono::high_resolution_clock::now();
+
+		// ADD N ELEMENTS
+		auto startTimeAdd = chrono::high_resolution_clock::now();
+		for (int i = 1; i < numOperation; i++)
+		{
+			if (mode == 0) myArray.append({ static_cast<double>(i) });
+			else if (mode == 1) myDynamicArray.append({ static_cast<double>(i) });
+			else if (mode == 2) myList.append({ static_cast<double>(i) });
+		}
+		auto endTimeAdd = chrono::high_resolution_clock::now();
+
+		// REMOVE 10% ELEMENT FROM START NUMBERS ELEMENT ON RANDOM PLACE
+		auto startTimeRemove = chrono::high_resolution_clock::now();
+		for (int i = 0; i < tenPercentOperation; i++)
+		{
+			if (mode == 0) myArray.remove(rand() % myArray.lenght());
+			else if (mode == 1) myDynamicArray.remove(rand() % myDynamicArray.lenght());
+			else if (mode == 2) myList.remove(rand() % myList.lenght());
+		}
+		auto endTimeRemove = chrono::high_resolution_clock::now();
+
+
+		// INSERT 10% RANDOM POINT FROM START NUMBERS ELEMENT BEFORE RANDOM INDEX
+		auto startTimeInsert = chrono::high_resolution_clock::now();
+		for (int i = 0; i < tenPercentOperation; i++)
+		{
+			if (mode == 0) myArray.insert(randomPoint(), rand() % myArray.lenght());
+			else if (mode == 1) myDynamicArray.insert(randomPoint(), rand() % myDynamicArray.lenght());
+			else if (mode == 2) myList.insert(randomPoint(), rand() % myList.lenght());
+		}
+		auto endTimeInsert = chrono::high_resolution_clock::now();
+
+		// SET 10 % RANDOM POINT FROM START NUMBERS ELEMENT ON RANDOM PLACE
+		auto startTimeSet = chrono::high_resolution_clock::now();
+		for (int i = 0; i < tenPercentOperation; i++)
+		{
+			if (mode == 0) 	myArray.set(randomPoint(), rand() % myArray.lenght());
+			else if (mode == 1) myDynamicArray.set(randomPoint(), rand() % myDynamicArray.lenght());
+			else if (mode == 2) myList.set(randomPoint(), rand() % myList.lenght());
+		}
+		auto endTimeSet = chrono::high_resolution_clock::now();
+
+		// GET 10% RANDOM POINT FROM START NUMBERS ELEMENT ON RANDOM PLACE
+		auto startTimeGet = chrono::high_resolution_clock::now();
+		for (int i = 0; i < tenPercentOperation; i++)
+		{
+			if (mode == 0) myArray.get(rand() % myArray.lenght());
+			else if (mode == 1) myDynamicArray.get(rand() % myDynamicArray.lenght());
+			else if (mode == 2) myList.get(rand() % myList.lenght());
+		}
+		auto endTimeGet = chrono::high_resolution_clock::now();
+
+		auto endTime = chrono::high_resolution_clock::now();
+
+		auto duration = chrono::duration_cast<chrono::milliseconds>(endTime - startTime);
+		auto durationAdd = chrono::duration_cast<chrono::milliseconds>(endTimeAdd - startTimeAdd);
+		auto durationRemove = chrono::duration_cast<chrono::milliseconds>(endTimeRemove - startTimeRemove);
+		auto durationInsert = chrono::duration_cast<chrono::milliseconds>(endTimeInsert - startTimeInsert);
+		auto durationSet = chrono::duration_cast<chrono::milliseconds>(endTimeSet - startTimeSet);
+		auto durationGet = chrono::duration_cast<chrono::milliseconds>(endTimeGet - startTimeGet);
+
+		cout << "Duration Add: " << durationAdd.count() << " milliseconds\n";
+		cout << "Duration Remove: " << durationRemove.count() << " milliseconds\n";
+		cout << "Duration Insert: " << durationInsert.count() << " milliseconds\n";
+		cout << "Duration Set: " << durationSet.count() << " milliseconds\n";
+		cout << "Duration Get: " << durationGet.count() << " milliseconds\n";
+		cout << "Duration: " << duration.count() << " milliseconds\n";
+	}
+	cout << "\n=== BENCHMARK MODE END ===\n";
 }
