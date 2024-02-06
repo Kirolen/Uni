@@ -1,8 +1,29 @@
 #include <iostream>
+#include <chrono>
+#include <thread>
 
 const int SIZE = 5;
 
 using namespace std;
+
+template <typename T>
+T getValidInput(const string& prompt) {
+	T value;
+	bool cinFail;
+	do
+	{
+		cinFail = false;
+		cout << prompt;
+		cin >> value;
+		if (cin.fail()) {
+			cerr << "\n### Invalid input. Please enter a valid number. ###\n\n";
+			cin.clear();
+			cin.ignore(numeric_limits<streamsize>::max(), '\n');
+			cinFail = true;
+		};
+	} while (cinFail);
+	return value;
+}
 
 struct point
 {
@@ -13,11 +34,25 @@ struct point
 		os << "x: " << object.x << " y: " << object.y << " z: " << object.z;
 		return os;
 	}
-
 	bool operator ==(const point& object)
 	{
 		return (object.x == this->x) && (object.y == this->y) && (object.z == this->z);
 	}
+
+	point get()
+	{
+		this->x = getValidInput<double>("Enter x value for the point: ");
+		this->y = getValidInput<double>("Enter y value for the point: ");
+		this->z = getValidInput<double>("Enter z value for the point: ");
+		return *this;
+	}
+};
+
+enum DataStructure 
+{
+	LIST_ARRAY,
+	DYNAMIC_ARRAY,
+	LIST
 };
 
 template <typename T>
@@ -33,7 +68,8 @@ public:
 		arrSize = 0;
 	}
 
-	void append(T data) {
+	void append(T data) 
+	{
 		if (arrSize == SIZE) 
 		{
 			cerr << "\n\n### Error: List is full!###\n\n";
@@ -69,24 +105,18 @@ public:
 			cerr << "\n### Error: incorect index! ###\n";
 			return;
 		}
-		for (int i = index; i < arrSize - 1; i++) 
-		{
-			arrData[i] = arrData[i + 1];
-		}
+		for (int i = index; i < arrSize - 1; i++) { arrData[i] = arrData[i + 1]; }
 		arrSize--;
 	}
 
 	T get(int index)
 	{
-		if (index < 0 || index >= arrSize)
-		{
-			throw out_of_range("\n### Error: incorect index! ###\n");
-		}
+		if (index < 0 || index >= arrSize) { throw out_of_range("\n### Error: incorect index! ###\n"); }
 		return arrData[index];
-		
 	}
 
-	void set(T data, int index) {
+	void set(T data, int index) 
+	{
 		if (index < 0 || index >= arrSize) {
 			cout << "\n### Error: incorect index! ###\n";
 			return;
@@ -99,12 +129,9 @@ public:
 		return arrSize;
 	}
 
-	int find(T data) {
-		for (int i = 0; i < arrSize; i++) {
-			if (arrData[i] == data) {
-				return i;
-			}
-		}
+	int find(T data) 
+	{
+		for (int i = 0; i < arrSize; i++) { if (arrData[i] == data) return i; }
 		return -1;
 	}
 
@@ -118,7 +145,6 @@ public:
 		for (int i = 0; i < arrSize; i++) {
 			cout << arrData[i] << "\n";
 		}
-		cout << endl;
 	}
 };
 
@@ -140,10 +166,7 @@ public:
 	{
 		int newSize = size + 1;
 		T* newDataArr = new T[newSize];
-		for (int i = 0; i < size; i++)
-		{
-			newDataArr[i] = dataArr[i];
-		}
+		for (int i = 0; i < size; i++) { newDataArr[i] = dataArr[i]; }
 		newDataArr[size] = data;
 		delete[] dataArr;
 		size++;
@@ -182,27 +205,24 @@ public:
 		int newSize = size - 1;
 		T* newDataArr = new T[newSize];
 		for (int i = 0, j = 0; i < size; i++)
-			{
-				if (i == index) continue;
-				newDataArr[j++] = dataArr[i];
-			}
-			delete[] dataArr;
-			size--;
-			dataArr = newDataArr;
+		{
+			if (i == index) continue;
+			newDataArr[j++] = dataArr[i];
+		}
+		delete[] dataArr;
+		size--;
+		dataArr = newDataArr;
 	}
 
 	T get(int index)
 	{
-		if (index < 0 || index >= size)
-		{
-			throw out_of_range("\n### Error: incorect index! ###\n");
-		}
+		if (index < 0 || index >= size) { throw out_of_range("\n### Error: incorect index! ###\n"); }
 		return dataArr[index];
-
 	}
 
 	void set(T data, int index) {
-		if (index < 0 || index >= size) {
+		if (index < 0 || index >= size) 
+		{
 			cout << "\n### Error: incorect index! ###\n";
 			return;
 		}
@@ -214,12 +234,9 @@ public:
 		return size;
 	}
 
-	int find(T data) {
-		for (int i = 0; i < size; i++) {
-			if (dataArr[i] == data) {
-				return i;
-			}
-		}
+	int find(T data) 
+	{
+		for (int i = 0; i < size; i++) { if (dataArr[i] == data) { return i; } }
 		return -1;
 	}
 
@@ -260,7 +277,6 @@ private:
 
 	Node* head;
 	int size;
-
 public:
 	List()
 	{
@@ -307,7 +323,7 @@ public:
 
 	void remove(int index)
 	{
-		if (index < 0 || index > size)
+		if (index < 0 || index >= size)
 		{
 			cerr << "\n### Error: incorrect index! ###\n";
 			return;
@@ -338,24 +354,21 @@ public:
 
 	T get(int index)
 	{
-		if (index < 0 || index >= size)
-		{
-			throw out_of_range("\n### Error: incorect index! ###\n");
-		}
-
+		if (index < 0 || index >= size) { throw out_of_range("\n### Error: incorect index! ###\n"); }
 		Node* current = head;
-		for (int i = 0; i < index - 1; i++) { current = current->next; }
+		for (int i = 0; i < index-1; i++) { current = current->next; }
 		return current->data;
 	}
 
-	void set(T data, int index) {
+	void set(T data, int index) 
+	{
 		if (index < 0 || index >= size) {
 			cout << "\n### Error: incorect index! ###\n";
 			return;
 		}
 
 		Node* current = head;
-		for (int i = 0; i < index - 1; i++) { current = current->next; }
+		for (int i = 0; i < index; i++) { current = current->next; }
 		current->data = data;
 	}
 
@@ -392,124 +405,254 @@ public:
 
 	~List()
 	{
+		while (head != nullptr)
+		{
+			Node* temp = head->next;
+			delete head;
+			head = temp;
+		}
 
 	}
 };
 
 void demonstrationMode();
+void interactiveMode();
+
+
+void menu();
+DataStructure selectDataStructure();
 
 int main()
 {
-	demonstrationMode();
+	cout << "Program Mode\n"
+		"1. Interactive Mode\n"
+		"2. Demonstartion Mode\n"
+		"3. Benchmark Mode\n";
+	int choice;
+	choice = getValidInput<int>("Enter a program mode: ");
+	switch(choice)
+	{
+		case 1:
+			interactiveMode();
+			break;
+		case 2:
+			demonstrationMode();
+			break;
+		case 3:
+			break;
+		default:
+			cout << "\n### Invalid number! ###\n";
+			break;
+	}
 }
 
+void menu()
+{
+	cout << "\nMenu: \n"
+			"1. Append\n"
+			"2. Insert\n"
+			"3. Remove\n"
+			"4. Get\n"
+			"5. Set\n"
+			"6. Print\n"
+			"7. Find\n"
+			"8. Length\n"
+			"9. isEmpty\n"
+			"0. Exit\n";
+
+}
+DataStructure selectDataStructure() {
+	int choice;
+
+	while (true)
+	{
+		cout << "\n=== Data Structure Selection ===\n";
+		cout << "1. Fixed Size Array (ListArr)\n";
+		cout << "2. Dynamic Array (DynamicArr)\n";
+		cout << "3. Linked List (List)\n";
+
+		choice = getValidInput<int>("Enter your choice: ");
+
+		if (choice < 1 || choice > 3) {
+			cout << "Invalid choice. Please try again.\n";
+			continue;
+		}
+
+		return static_cast<DataStructure>(choice - 1);
+	}
+}
 void demonstrationMode()
 {
 	cout << "\n=== DEMONSTRATION MODE ===\n";
-	/*cout << "\n=== FIXED SIZE ARRAY ===\n";
-	ListArr<point> first;
-	point a{ 0 }, b{ 1 }, c{ 3 };
-	first.append(a);
-	first.append(b);
-	first.append(c);
-	first.print();
-
-	first.remove(1);
-	first.print();
-
-	first.insert({ 5 }, 1);
-	first.print();
-
-	cout << "Get: " << first.get(0) << "\n";
-
-	first.set({ 10 }, 4);
-	first.print();
-
-	first.set({ 10 }, 2);
-	first.print();
-
-	cout << "Size: " << first.lenght() << "\n";
-	cout << "Index: " << first.find( { 10, 0, 0 } ) << "\n";
-	cout << "Index: " << first.find({ 8, 0, 0 }) << "\n";
-		*/
-	/*
-	cout << "\n=== DYNAMIC SIZE ARRAY ===\n";
-	dynamicArr<point> dynamic;
-	point a{ 1 }, b{ 2 }, c{ 3 };
-
-	dynamic.append(a);
-	dynamic.append(b);
-	dynamic.append(c);
-	dynamic.print();
-	cout << "\n";
-	dynamic.insert({ 10 }, 2);
-	dynamic.print();
-
-	cout << "\n";
-	dynamic.remove(1);
-	dynamic.print();
-
-	cout << "\n";
-	cout << "Get 0: " << dynamic.get(0) << "\n";
-
-
-	cout << "\n";
-	dynamic.set({ 100 }, 1);
-	dynamic.print();
-
-	cout << "\n";
-	cout << "Size: " << dynamic.lenght() << "\n";
-
-	cout << "\n";
-	cout << "Find (100, 0, 0): " << dynamic.find({100}) << "\n";
-
-	dynamic.isEmpty() ? cout << "Array is empty\n" : cout << "Array ism`t empty\n";
-	dynamic.remove(0);
-	dynamic.remove(0);
-	dynamic.remove(0);
-	dynamic.isEmpty() ? cout << "Array is empty\n" : cout << "Array ism`t empty\n";
-	*/
-	
-	cout << "\n=== LIST ===\n";
+	ListArr<point> myArray;
+	dynamicArr<point> myDynamicArray;
 	List<point> myList;
-	myList.append({ 1 });
-	myList.append({ 2 });
-	myList.append({ 3 });
-	myList.print();
 
-	cout << "\n";
-	myList.insert({ 100 }, 0);
-	myList.print();
+	for (int mode = 0; mode < 3; mode++)
+	{
+		this_thread::sleep_for(chrono::seconds(1));
+		if (mode == 0) cout << "\n\n=== DEMONSTATION FIXED SIZE ARRAY ===\n";
+		else if (mode == 1) cout << "\n\n=== DEMONSTRATION DYNAMIC SIZE ARRAY ===\n";
+		else if (mode == 2) cout << "\n\n=== DEMONSTRATION LIST ===\n";
 
-	cout << "\n";
-	myList.insert({ 50 }, 2);
-	myList.print();
+		this_thread::sleep_for(chrono::seconds(1));
+		cout << "\n=== ADD 5 ELEMENTS ===\n";
+		for (int i = 1; i < 6; i++)
+		{
+			if (mode == 0) myArray.append({ static_cast<double>(i) });
+			else if (mode == 1) myDynamicArray.append({ static_cast<double>(i) });
+			else if (mode == 2) myList.append({ static_cast<double>(i) });
+		}
 
-	cout << "\n";
-	myList.remove(2);
-	myList.print();
+		this_thread::sleep_for(chrono::seconds(1));
+		cout << "\n=== PRINT ALL ELEMENT ===\n";
+		this_thread::sleep_for(chrono::seconds(1));
+		if (mode == 0) myArray.print();
+		else if (mode == 1) myDynamicArray.print();
+		else if (mode == 2) myList.print();
 
-	cout << "\n";
-	myList.remove(0);
-	myList.print();
+		this_thread::sleep_for(chrono::seconds(1));
+		cout << "\n=== ADD 1 MORE ELEMENT ===\n";
+		this_thread::sleep_for(chrono::seconds(1));
+		if (mode == 0) myArray.append({0});
+		else if (mode == 1) myDynamicArray.append({0});
+		else if (mode == 2) myList.append({ 0 });
 
-	cout << "\n";
-	cout << "Get 0: " << myList.get(0) << "\n";
+		cout << "\n=== REMOVE 0 INDEX ELEMENT ===\n";
+		this_thread::sleep_for(chrono::seconds(1));
+		if (mode == 0) myArray.remove(0);
+		else if (mode == 1) myDynamicArray.remove(0);
+		else if (mode == 2) myList.remove(0);
 
-	cout << "\n";
-	cout << "Set 0:\n";
-	myList.set({0}, 0);
-	myList.print();
+		cout << "\n=== INSERT {10, 0, 0} BEFORE 1 INDEX ELEMENT ===\n";
+		this_thread::sleep_for(chrono::seconds(1));
+		if (mode == 0) myArray.insert({10}, 0);
+		else if (mode == 1) myDynamicArray.insert({ 10 }, 0);
+		else if (mode == 2) myList.insert({ 10 }, 0);
 
-	cout << "\n";
-	cout << "Size: " << myList.lenght() << "\n";
+		cout << "\n=== SET {8, 0, 0} ON 4 INDEX ELEMENT ===\n";
+		this_thread::sleep_for(chrono::seconds(1));
+		if (mode == 0) 	myArray.set({ 8 }, 4);
+		else if (mode == 1) myDynamicArray.set({ 8 }, 4);
+		else if (mode == 2) myList.set({ 8 }, 4);
 
-	cout << "\n";
-	cout << "Find (3, 0, 0): " << myList.find({3}) << "\n";
+		this_thread::sleep_for(chrono::seconds(1));
+		cout << "\n=== PRINT ARRAY ===\n";
+		this_thread::sleep_for(chrono::seconds(1));
+		if (mode == 0) myArray.print();
+		else if (mode == 1) myDynamicArray.print();
+		else if (mode == 2) myList.print();
 
-	myList.isEmpty() ? cout << "Array is empty\n" : cout << "Array ism`t empty\n";
-	myList.remove(0);
-	myList.remove(0);
-	myList.remove(0);
-	myList.isEmpty() ? cout << "Array is empty\n" : cout << "Array ism`t empty\n";
+		this_thread::sleep_for(chrono::seconds(1));
+		cout << "\n=== GET 4 INDEX ELEMENT ===\n";
+		this_thread::sleep_for(chrono::seconds(1));
+		if (mode == 0) 	cout << "Get: " << myArray.get(4) << "\n";
+		else if (mode == 1) cout << "Get: " << myDynamicArray.get(4) << "\n";
+		else if (mode == 2) cout << "Get: " << myList.get(4) << "\n";
+
+		this_thread::sleep_for(chrono::seconds(1));
+		cout << "\n=== GET SIZE ARRAY ===\n";
+		this_thread::sleep_for(chrono::seconds(1));
+		if (mode == 0) 	cout << "Size: " << myArray.lenght() << "\n";
+		else if (mode == 1) cout << "Size: " << myDynamicArray.lenght() << "\n";
+		else if (mode == 2) cout << "Size: " << myList.lenght() << "\n";
+
+		this_thread::sleep_for(chrono::seconds(1));
+		cout << "\n=== FIND {8, 0, 0} ELEMENT INDEX ===\n";
+		this_thread::sleep_for(chrono::seconds(1));
+		if (mode == 0) 	cout << "Index: " << myArray.find({ 8, 0, 0 }) << "\n";
+		else if (mode == 1) cout << "Index: " << myDynamicArray.find({ 8, 0, 0 }) << "\n";
+		else if (mode == 2) cout << "Size: " << myList.find({8, 0, 0}) << "\n";
+	}
+	cout << "\n=== DEMONSTRATION END ===";
+}
+void interactiveMode()
+{
+	cout << "\n=== Interactive Mode ===\n";
+	DataStructure ds = selectDataStructure();
+
+	int choice = -1;
+	int index;
+	point data;
+
+	ListArr<point> listArr;
+	dynamicArr<point> dynamic;
+	List<point> myList;
+	while (choice != 0) 
+	{
+		menu();
+		choice = getValidInput<int>("Enter your choice: ");
+
+		switch (choice) {
+		case 0:
+			cout << "\n=== EXIT ===\n";
+			break;
+		case 1:
+			data = data.get();
+			if (ds == LIST_ARRAY) listArr.append(data);
+			else if (ds == DYNAMIC_ARRAY) dynamic.append(data);
+			else myList.append(data);
+
+			break;
+		case 2:
+			index = getValidInput<int>("Enter index to insert: ");
+			data = data.get();
+			if (ds == LIST_ARRAY) listArr.insert(data, index);
+			else if (ds == DYNAMIC_ARRAY) dynamic.insert(data, index);
+			else myList.insert(data, index);
+
+			break;
+		case 3:
+			index = getValidInput<int>("Enter index to remove: ");
+			if (ds == LIST_ARRAY) listArr.remove(index);
+			else if (ds == DYNAMIC_ARRAY) dynamic.remove(index);
+			else myList.remove(index);
+
+			break;
+		case 4:
+			index = getValidInput<int>("Enter index to get: ");
+			try 
+			{
+				if (ds == LIST_ARRAY) cout << listArr.get(index) << "\n";
+				else if (ds == DYNAMIC_ARRAY) cout << dynamic.get(index) << "\n";
+				else cout << myList.get(index) << "\n";
+			}
+			catch (const out_of_range& e) { cerr << e.what() << endl; }
+			break;
+		case 5:
+			index = getValidInput<int>("Enter index to set: ");
+			data = data.get();
+			if (ds == LIST_ARRAY) listArr.set(data, index);
+			else if (ds == DYNAMIC_ARRAY) dynamic.set(data, index);
+			else myList.set(data, index);
+
+			break;
+		case 6:
+			if (ds == LIST_ARRAY) listArr.print();
+			else if (ds == DYNAMIC_ARRAY) dynamic.print();
+			else myList.print();
+
+			break;
+		case 7:
+			cout << "Enter data to find: \n";
+			data = data.get();
+			if (ds == LIST_ARRAY) cout << "Index: " << listArr.find(data) << "\n";
+			else if (ds == DYNAMIC_ARRAY) cout << "Index: " << dynamic.find(data) << "\n";
+			else cout << "Index: " << myList.find(data) << "\n";
+
+			break;
+		case 8:
+			if (ds == LIST_ARRAY) cout << "Lenght: " << listArr.lenght() << "\n";
+			else if (ds == DYNAMIC_ARRAY) cout << "Lenght: " << dynamic.lenght() << "\n";
+			else cout << "Lenght: " << myList.lenght() << "\n";
+			break;
+		case 9:
+			if (ds == LIST_ARRAY) listArr.isEmpty() ? cout << "Fixed array is empty\n" : cout << "Fixed array isn`t empty\n";
+			else if (ds == DYNAMIC_ARRAY) dynamic.isEmpty() ? cout << "Dynamic array is empty\n" : cout << "Dynamic array isn`t empty\n";
+			else myList.isEmpty() ? cout << "List is empty\n" : cout << "List isn`t empty\n";
+
+			break;
+		}
+
+	}
 }
