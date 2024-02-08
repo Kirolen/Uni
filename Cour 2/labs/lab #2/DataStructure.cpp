@@ -93,10 +93,10 @@ public:
 			cerr << "\n### Error: List is full!###\n";
 			return;
 		}
+
 		for (int i = arrSize; i > index; i--)
-		{
 			arrData[i] = arrData[i - 1];
-		}
+
 		arrData[index] = data;
 		arrSize++;
 	}
@@ -108,20 +108,22 @@ public:
 			cerr << "\n### Error: incorrect index! ###\n";
 			return;
 		}
-		for (int i = index; i < arrSize - 1; i++) { arrData[i] = arrData[i + 1]; }
+		for (int i = index; i < arrSize - 1; i++) 
+			arrData[i] = arrData[i + 1]; 
 		arrSize--;
 	}
 
 	T get(int index)
 	{
-		if (index < 0 || index >= arrSize) { throw out_of_range("\n### Error: incorrect index! ###\n"); }
+		if (index < 0 || index >= arrSize) 
+			throw out_of_range("\n### Error: incorrect index! ###\n"); 
 		return arrData[index];
 	}
 
 	void set(T data, int index) 
 	{
 		if (index < 0 || index >= arrSize) {
-			cout << "\n### Error: incotrect index! ###\n";
+			cout << "\n### Error: incorrect index! ###\n";
 			return;
 		}
 		arrData[index] = data;
@@ -134,7 +136,8 @@ public:
 
 	int find(T data) 
 	{
-		for (int i = 0; i < arrSize; i++) { if (arrData[i] == data) return i; }
+		for (int i = 0; i < arrSize; i++) 
+			if (arrData[i] == data) return i;
 		return -1;
 	}
 
@@ -145,9 +148,8 @@ public:
 
 	void print() 
 	{
-		for (int i = 0; i < arrSize; i++) {
+		for (int i = 0; i < arrSize; i++)
 			cout << arrData[i] << "\n";
-		}
 	}
 };
 
@@ -169,7 +171,8 @@ public:
 	{
 		int newSize = size + 1;
 		T* newDataArr = new T[newSize];
-		for (int i = 0; i < size; i++) { newDataArr[i] = dataArr[i]; }
+		for (int i = 0; i < size; i++) 
+			newDataArr[i] = dataArr[i];
 		newDataArr[size] = data;
 		delete[] dataArr;
 		size++;
@@ -219,7 +222,8 @@ public:
 
 	T get(int index)
 	{
-		if (index < 0 || index >= size) { throw out_of_range("\n### Error: incorrect index! ###\n"); }
+		if (index < 0 || index >= size) 
+			throw out_of_range("\n### Error: incorrect index! ###\n"); 
 		return dataArr[index];
 	}
 
@@ -239,16 +243,15 @@ public:
 
 	int find(T data) 
 	{
-		for (int i = 0; i < size; i++) { if (dataArr[i] == data) { return i; } }
+		for (int i = 0; i < size; i++) 
+			if (dataArr[i] == data) return i; 
 		return -1;
 	}
 
 	void print()
 	{
 		for (int i = 0; i < size; i++)
-		{
 			cout << dataArr[i] << "\n";
-		}
 	}
 
 	bool isEmpty()
@@ -319,7 +322,8 @@ public:
 		}
 
 		Node* current = head;
-		for (int i = 0; i < index - 1; i++) { current = current->next; }
+		for (int i = 0; i < index - 1; i++) 
+			current = current->next; 
 		current->next = new Node(data, current->next);
 		size++;
 	}
@@ -357,9 +361,13 @@ public:
 
 	T get(int index)
 	{
-		if (index < 0 || index >= size) { throw out_of_range("\n### Error: incorrect index! ###\n"); }
+		if (index < 0 || index >= size) 
+			throw out_of_range("\n### Error: incorrect index! ###\n"); 
+
 		Node* current = head;
-		for (int i = 0; i < index-1; i++) { current = current->next; }
+		for (int i = 0; i < index-1; i++) 
+			current = current->next; 
+
 		return current->data;
 	}
 
@@ -371,7 +379,8 @@ public:
 		}
 
 		Node* current = head;
-		for (int i = 0; i < index; i++) { current = current->next; }
+		for (int i = 0; i < index; i++) 
+			current = current->next; 
 		current->data = data;
 	}
 
