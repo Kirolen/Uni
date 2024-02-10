@@ -1,10 +1,44 @@
+/*
+2b. 26. Реалізувати структуру даних Unrolled link list (див. наприклад https://en.wikipedia.org/wiki/Unrolled_linked_list ). 
+Операції стандартні для списків – обхід (в обох напрямках), додавання елементу (в кінець, початок або довільну позицію), 
+видалення елементу, доступ за індексом, пошук за значенням.
+*/
+
 #include <iostream>
+#include <cmath>
+#include <chrono>
+#include <thread>
+#include <cstdlib>
+#include <ctime>
 #include <cmath>
 
 using namespace std;
 
 #define maxElements 4  
 #define zeroIndex 0
+#define randIndex 10000
+#define maxElem 4000000
+#define isBenchmark true
+template <typename T>
+T getValidInput(const string& prompt) 
+{
+    T value;
+    bool cinFail;
+    do
+    {
+        cinFail = false;
+        cout << prompt;
+        cin >> value;
+        if (cin.fail()) {
+            cerr << "\n### Invalid input. Please enter a valid number. ###\n\n";
+            cin.clear();
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+            cinFail = true;
+        };
+    } while (cinFail);
+    return value;
+}
+
 
 template <typename T>
 class UnLinList
@@ -50,9 +84,7 @@ public:
         else 
         {
             if (foot->numElements < ceil(maxElements/2)) 
-            {
                 foot->data[foot->numElements++] = value;
-            }
             else
             {
                 foot->next = new Node;
@@ -72,7 +104,8 @@ public:
             return;
         }
 
-        if (index == 0 && !head) insertBegin(value);
+        if (index == 0 && !head) 
+            insertBegin(value);
         else
         {
             int currentIndex = 0;
@@ -237,16 +270,16 @@ public:
 
         int currentIndex = 0;
         Node* current = head;
-        while (current && currentIndex + current->numElements < index)
+        while (current && currentIndex + current->numElements <= index)
         {
             currentIndex += current->numElements;
             current = current->next;
         }
 
-        current->data[currentIndex] = value;
+        current->data[index -= currentIndex] = value;
     }
 
-    int find(T value)
+    int find(T value, bool benchmarkMode)
     {
         Node* current = head;
         int index = 0;
@@ -259,6 +292,7 @@ public:
             }
             current = current->next;
         }
+        if (benchmarkMode) return -1;
         throw ("\n### Element didn`t found ###\n");
     }
 
@@ -297,6 +331,11 @@ public:
         cout << "nullptr\n";
     }
 
+    int lenght() 
+    {
+        return this->size;
+    }
+
     ~UnLinList()
     {
         while (head != nullptr)
@@ -308,73 +347,308 @@ public:
     }
 };
 
+void selectMode();
+void interactiveMode();
 void demonstrationMode();
+void benchmarkMode();
+
+void interactiveMenu();
+void selectMenu();
 
 int main()
 {
-    demonstrationMode();
+    selectMode();
     return 0;
 }
 
+void selectMode()
+{
+    int choice;
+    do
+    {
+        selectMenu();
+        choice = getValidInput<int>("Enter your choice: ");
+        switch (choice)
+        {
+        case 1:
+            demonstrationMode();
+            break;
+        case 2:
+            benchmarkMode();
+            break;
+        case 3:
+            interactiveMode();
+            break;
+        case 0:
+            cout << "Exiting...\n";
+            break;
+        default:
+            cout << "Invalid choice! Please try again.\n";
+            break;
+        }
+    } while (choice != 0);
+}
+void interactiveMode()
+{
+    UnLinList<int> mylist;
+    cout << "\n\n=== INTERACTIVE MODE ===\n";
+
+    int choice;
+    do
+    {
+        interactiveMenu();
+        choice = getValidInput<int>("Enter your choice: ");
+
+        switch (choice)
+        {
+        case 1:
+        {
+            int value = getValidInput<int>("Enter the value to add: ");
+            mylist.push_back(value);
+            cout << "Element added successfully!\n";
+            break;
+        }
+        case 2:
+        {
+            int index = getValidInput<int>("Enter the index where you want to insert: ");
+            int value = getValidInput<int>("Enter the value to insert: ");
+            mylist.insert(index, value);
+            cout << "Element inserted successfully!\n";
+            break;
+        }
+        case 3:
+        {
+            int index = getValidInput<int>("Enter the index of the element to remove: ");
+            mylist.remove(index);
+            cout << "Element removed successfully!\n";
+            break;
+        }
+        case 4:
+        {
+            int index = getValidInput<int>("Enter the index of the element to get: ");
+            try { cout << "Element at index " << index << ": " << mylist.get(index) << endl; }
+            catch (const char* errorMessage) { cerr << errorMessage << endl; }
+            break;
+        }
+        case 5:
+        {
+            int index = getValidInput<int>("Enter the index of the element to set: ");
+            int value = getValidInput<int>("Enter the new value: ");
+            mylist.set(index, value);
+            cout << "Element set successfully!\n";
+            break;
+        }
+        case 6:
+        {
+            int value = getValidInput<int>("Enter the value to find: ");
+            try
+            {
+                int index = mylist.find(value, !isBenchmark);
+                cout << "Element found at index: " << index << endl;
+            }
+            catch (const char* errorMessage) { cerr << errorMessage << endl; }
+            break;
+        }
+        case 7:
+        {
+            cout << "List contents:\n";
+            mylist.print();
+            break;
+        }
+        case 8:
+        {
+            cout << "List contents in reverse:\n";
+            mylist.reverse_print();
+            break;
+        }
+        case 9:
+        {
+            cout << "Size of the list: " << mylist.lenght() << endl;
+            break;
+        }
+        case 0:
+            cout << "Exiting interactive mode...\n";
+            break;
+        default:
+            cout << "Invalid choice! Please try again.\n";
+            break;
+        }
+    } 
+    while (choice != 0);
+}
 void demonstrationMode()
 {
     UnLinList<int> myUnrolled;
-    myUnrolled.insert(0, 6);
-    myUnrolled.insert(0, 6);
-    myUnrolled.insertBegin(6);
-    myUnrolled.insert(0, 6);
-    myUnrolled.insert(0, 6);
-    myUnrolled.insertBegin(6);
-    myUnrolled.print();
-    cout << "================================\n";
 
-    myUnrolled.insert(3, 1);
-    myUnrolled.print();
-    cout << "================================\n";
+    this_thread::sleep_for(chrono::seconds(1));
+    cout << "\n\n=== DEMONSTATION UNROLLED LINKED LIST ===\n";
 
-    myUnrolled.insert(3, 2);
-    myUnrolled.print();
-    cout << "================================\n";
+    this_thread::sleep_for(chrono::seconds(1));
+    cout << "\n=== ADD 10 ELEMENTS TO THE END ===\n";
+    for (int i = 0; i < 10; i++)
+        myUnrolled.push_back(i);
 
-    myUnrolled.insert(3, 3);
+    this_thread::sleep_for(chrono::seconds(1));
+    cout << "\n=== PRINT THE LIST ===\n";
+    this_thread::sleep_for(chrono::seconds(1));
     myUnrolled.print();
-    cout << "================================\n";
+    this_thread::sleep_for(chrono::seconds(1));
 
-    myUnrolled.insert(3, 4);
-    myUnrolled.print();
-    cout << "================================\n";
-
-    myUnrolled.insert(3, 5);
-    myUnrolled.print();
-    cout << "================================\n";
-    myUnrolled.insert(11, 100);
-    myUnrolled.print();
-    cout << "================================\n";
-
-    myUnrolled.remove(5);
-    myUnrolled.remove(11);
-    myUnrolled.remove(10);
-    myUnrolled.print();
-    cout << "================================\n";
-
-    try { cout << "Get 0: " << myUnrolled.get(0) << endl; }
-    catch (const char* errorMessage) { cerr << "Error: " << errorMessage << std::endl; }
-    try { cout << "Get 5: " << myUnrolled.get(5) << endl; }
-    catch (const char* errorMessage) { cerr << "Error: " << errorMessage << std::endl; }
-    try { cout << "Get 6: " << myUnrolled.get(6) << endl; }
-    catch (const char* errorMessage) { cerr << "Error: " << errorMessage << std::endl; }
-
-    myUnrolled.set(0, 99);
-    myUnrolled.print();
-    cout << "================================\n";
-        
-    try { cout << "Find 99: " << myUnrolled.find(99) << endl; }
-    catch (const char* errorMessage) { cerr << "Error: " << errorMessage << std::endl; };
-    try { cout << "Find 1000: " << myUnrolled.find(1000) << endl; }
-    catch (const char* errorMessage) { cerr << "Error: " << errorMessage << std::endl; }
-    try { cout << "Find 3: " << myUnrolled.find(3) << endl; }
-    catch (const char* errorMessage) { cerr << "Error: " << errorMessage << std::endl; };
-
-    cout << "\n\n\n\n";
+    cout << "\n=== REVETSE THE LIST IN REVERSE ===\n";
+    this_thread::sleep_for(chrono::seconds(1));
     myUnrolled.reverse_print();
+    this_thread::sleep_for(chrono::seconds(1));
+
+    cout << "\n=== REMOVE AN ELEMENT AT 3 INDEX ===\n";
+    myUnrolled.remove(3);
+    this_thread::sleep_for(chrono::seconds(1));
+
+    cout << "\n=== INSERT -2 AT 8 INDEX ===\n";
+    myUnrolled.insert(8, -2);
+    this_thread::sleep_for(chrono::seconds(1));
+
+    cout << "\n=== INSERT 15 AT 15 INDEX ===\n";
+    myUnrolled.insert(15, 15);
+    this_thread::sleep_for(chrono::seconds(1));
+
+    cout << "\n=== SET -20 AT 4 INDEX ===\n";
+    myUnrolled.set(4, -20);
+    this_thread::sleep_for(chrono::seconds(1));
+
+    this_thread::sleep_for(chrono::seconds(1));
+    cout << "\n=== PRINT THE LIST ===\n";
+    this_thread::sleep_for(chrono::seconds(1));
+    myUnrolled.print();
+    this_thread::sleep_for(chrono::seconds(1));
+
+    cout << "\n=== PRINT THE LIST IN REVERSE ===\n";
+    this_thread::sleep_for(chrono::seconds(1));
+    myUnrolled.reverse_print();
+    this_thread::sleep_for(chrono::seconds(1));
+
+    cout << "\n=== GET AN ELEMENT AT 5 INDEX ===\n";
+    this_thread::sleep_for(chrono::seconds(1));
+    try { cout << "Get: " << myUnrolled.get(5) << endl; }
+    catch (const char* errorMessage) { cerr << errorMessage << endl; }
+    this_thread::sleep_for(chrono::seconds(1));
+
+    cout << "\n=== GET AN ELEMENT AT 14 INDEX ===\n";
+    this_thread::sleep_for(chrono::seconds(1));
+    try { cout << "Get: " << myUnrolled.get(14) << endl; }
+    catch (const char* errorMessage) { cerr << errorMessage << endl; }
+    this_thread::sleep_for(chrono::seconds(1));
+       
+    cout << "\n=== GET THE SIZE OF THE LIST ===\n";
+    this_thread::sleep_for(chrono::seconds(1));
+    cout << "Size of the list: " << myUnrolled.lenght() << endl;
+    this_thread::sleep_for(chrono::seconds(1));
+
+    cout << "\n=== FIND THE INDEX OF -2 ===\n";
+    this_thread::sleep_for(chrono::seconds(1));
+    try { cout << "Element founded at index: " << myUnrolled.find(-2, !isBenchmark) << endl; }
+    catch (const char* errorMessage) { cerr << errorMessage << endl; };
+    this_thread::sleep_for(chrono::seconds(1));
+
+    cout << "\n=== FIND THE INDEX OF -1 ===\n";
+    this_thread::sleep_for(chrono::seconds(1));
+    try { cout << "Element founded at index: " << myUnrolled.find(-1, !isBenchmark) << endl; }
+    catch (const char* errorMessage) { cerr << errorMessage << endl; };
+    this_thread::sleep_for(chrono::seconds(1));
+
+    cout << "\n=== DEMONSTRATION END ===";
+}
+void benchmarkMode()
+{
+    cout << "\n=== BENCHMARK MODE ===\n";
+    UnLinList<int> mylist;
+
+    int numOperation;
+    do { numOperation = getValidInput<int>("Enter a num of operation: "); } while (numOperation < 1 || numOperation > maxElem);
+    int tenPercentOperation = ceil(numOperation * 0.1);
+
+    this_thread::sleep_for(chrono::seconds(1));
+    cout << "\n\n=== BENCHMARK UNROLLED LINKED LIST ===\n";
+
+    auto startTime = chrono::high_resolution_clock::now();
+
+    // ADD N ELEMENTS
+    auto startTimeAdd = chrono::high_resolution_clock::now();
+    for (int i = 0; i < numOperation; i++)
+        mylist.push_back(rand() % randIndex);
+
+   auto endTimeAdd = chrono::high_resolution_clock::now();
+
+    // REMOVE 10% ELEMENTS FROM START NUMBERS ELEMENT ON RANDOM PLACE
+    auto startTimeRemove = chrono::high_resolution_clock::now();
+    for (int i = 0; i < tenPercentOperation; i++)
+        mylist.remove(rand() % mylist.lenght());
+    auto endTimeRemove = chrono::high_resolution_clock::now();
+
+    // INSERT 10% RANDOM ELEMENTS FROM START NUMBERS ELEMENT BEFORE RANDOM INDEX
+    auto startTimeInsert = chrono::high_resolution_clock::now();
+    for (int i = 0; i < tenPercentOperation; i++)
+        mylist.insert(rand() % mylist.lenght(), rand() % randIndex);
+    auto endTimeInsert = chrono::high_resolution_clock::now();
+
+    // SET 10 % RANDOM ELEMENTS FROM START NUMBERS ELEMENT ON RANDOM PLACE
+    auto startTimeSet = chrono::high_resolution_clock::now();
+    for (int i = 0; i < tenPercentOperation; i++)  
+        mylist.set(rand() % mylist.lenght(), rand() % randIndex);
+    auto endTimeSet = chrono::high_resolution_clock::now();
+
+    // GET 10% RANDOM ELEMENTS FROM START NUMBERS ELEMENT ON RANDOM PLACE
+    auto startTimeGet = chrono::high_resolution_clock::now();
+    for (int i = 0; i < tenPercentOperation; i++)
+        mylist.get(rand() % mylist.lenght());
+    auto endTimeGet = chrono::high_resolution_clock::now();
+
+    // FIND 10% RANDOM ELEMENTS FROM START NUMBERS ELEMENT ON RANDOM PLACE
+    auto startTimeFind = chrono::high_resolution_clock::now();
+    for (int i = 0; i < tenPercentOperation; i++)
+        mylist.find(rand() % randIndex, isBenchmark);
+    auto endTimeFind = chrono::high_resolution_clock::now();
+
+    auto endTime = chrono::high_resolution_clock::now();
+
+    auto duration = chrono::duration_cast<chrono::milliseconds>(endTime - startTime);
+    auto durationAdd = chrono::duration_cast<chrono::milliseconds>(endTimeAdd - startTimeAdd);
+    auto durationRemove = chrono::duration_cast<chrono::milliseconds>(endTimeRemove - startTimeRemove);
+    auto durationInsert = chrono::duration_cast<chrono::milliseconds>(endTimeInsert - startTimeInsert);
+    auto durationSet = chrono::duration_cast<chrono::milliseconds>(endTimeSet - startTimeSet);
+    auto durationGet = chrono::duration_cast<chrono::milliseconds>(endTimeGet - startTimeGet);
+    auto durationFind = chrono::duration_cast<chrono::milliseconds>(endTimeFind - startTimeFind);
+
+    cout << "Duration Add: " << durationAdd.count() << " milliseconds\n";
+    cout << "Duration Remove: " << durationRemove.count() << " milliseconds\n";
+    cout << "Duration Insert: " << durationInsert.count() << " milliseconds\n";
+    cout << "Duration Set: " << durationSet.count() << " milliseconds\n";
+    cout << "Duration Get: " << durationGet.count() << " milliseconds\n";
+    cout << "Duration Find: " << durationFind.count() << " milliseconds\n";
+    cout << "Duration: " << duration.count()/ 1000.0 << " seconds\n";
+    cout << "\n=== BENCHMARK MODE END ===";
+}
+
+void interactiveMenu()
+{
+    cout << "\nMENU:\n"
+            "1. Add an element to the end\n"
+            "2. Insert an element at a specific index\n"
+            "3. Remove an element at a specific index\n"
+            "4. Get an element at a specific index\n"
+            "5. Set an element at a specific index\n"
+            "6. Find the index of an element\n"
+            "7. Print the list\n"
+            "8. Print the list in reverse\n"
+            "9. Get the size of the list\n"
+            "0. Exit\n";
+
+}
+void selectMenu()
+{
+    cout << "\n=== SELECT MODE ===\n"
+            "1. Demonstration Mode\n"
+            "2. Benchmark Mode\n"
+            "3. Interactive Mode\n"
+            "0. Exit\n";
+
 }
