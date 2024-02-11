@@ -492,14 +492,14 @@ void benchmarkMode()
 
         auto durationRestore = chrono::duration_cast<chrono::milliseconds>(endTimeRestore - startTimeRestore);
         cout << "\n=============================\n";
-        cout << "\nTime add: " << durationAdd.count();
-        cout << "\nRecording time: " << durationRecord.count();
-        cout << "\nRestore time: " << durationRestore.count();
-        cout << "\nSearch time by name: " << durationSearchName.count();
-        cout << "\nSearch time by quantity: " << durationSearchDate.count();
-        cout << "\nSearch time by date: " << durationSearchDate.count();
-        cout << "\nTotal search time: " << durationSearchAll.count();
-        cout << "\nTotal working time: " << duration.count();
+        cout << "\nTime add: " << durationAdd.count() << " milliseconds\n";;
+        cout << "\nRecording time: " << durationRecord.count() << " milliseconds\n";;
+        cout << "\nRestore time: " << durationRestore.count() << " milliseconds\n";;
+        cout << "\nSearch time by name: " << durationSearchName.count() << " milliseconds\n";;
+        cout << "\nSearch time by quantity: " << durationSearchDate.count() << " milliseconds\n";;
+        cout << "\nSearch time by date: " << durationSearchDate.count() << " milliseconds\n";;
+        cout << "\nTotal search time: " << durationSearchAll.count() << " milliseconds\n";;
+        cout << "\nTotal working time: " << duration.count() / 1000.0 << "seconds\n";
         if (mode == 0) cout << "\nSize: " << sizeof(buffer[0]) * num / 1024.0 / 1024.0 << " Mb \n";
         cout << "\n=============================\n";
 
