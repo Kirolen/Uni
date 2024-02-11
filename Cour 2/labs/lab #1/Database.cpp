@@ -6,8 +6,6 @@
 2) Tовари із заданим діапазоном кількості у заданій одиниці вимірювання; 
 3) Tовари з датою виробництва не пізніше заданої.
 */
-
-
 #include <iostream>
 #include <string>
 #include <fstream>
@@ -52,7 +50,16 @@ struct date
 {
     int year, month, day, hour, minute, second;
 
-    int dayInMonth(int month); //Функція для визначення кількості днів в місяці
+    date(int year = int(), int month = int(), int day = int(), int hour = int(), int minute = int(), int second = int())
+    {
+        this->year = year;
+        this->month = month;
+        this->day = day;
+        this->hour = hour;
+        this->minute = minute;
+        this->second = second;
+    }
+
     date addDaysToDate(int days)
     {
         date resultDate = *this;
@@ -77,6 +84,20 @@ struct date
             }
         }
         return resultDate;
+    }
+    int dayInMonth(int month)
+    {
+        switch (month)
+        {
+        case 1: case 3: case 5: case 7: case 8: case 10: case 12:
+            return 31;
+        case 4: case 6: case 9: case 11:
+            return 30;
+        case 2:
+            return (year % 4 == 0 && (year % 100 != 0 || year % 400 == 0)) ? 29 : 28;
+        default:
+            return -1;  // Повертаємо -1 у випадку некоректного місяця
+        }
     }
     void getDate()     //Функція запиту дати від користувача та перевірка кожного значення на правилність введення
     {
@@ -140,39 +161,19 @@ struct Product
     }
 };
 
-//Функції винисені за структуру
-int date::dayInMonth(int month)
-{
-    switch (month)
-    {
-    case 1: case 3: case 5: case 7: case 8: case 10: case 12:
-        return 31;
-    case 4: case 6: case 9: case 11:
-        return 30;
-    case 2:
-        return (year % 4 == 0 && (year % 100 != 0 || year % 400 == 0)) ? 29 : 28;
-    default:
-        return -1;  // Повертаємо -1 у випадку некоректного місяця
-    }
-}
-
-//Функції
-//Функції для текстової і бінарної бази данних
 void DatabaseManagement(const string& filename, bool isTxtDatabase);
+void VectorDatabase();
+void benchmarkMode();
+void demonstrationMode();
+
 void addElement(vector<Product>& bufferDatabase, bool randomElement, bool isBenchmark);
-void recordDatabase(const string& filename, const vector<Product>& bufferDatabase, bool isTxtDatabse, bool isBenchmark);
-void restore(const string& filename, vector<Product>& database, bool isTxtDatabse, bool isBenchmark);
+void recordDatabase(const string& filename, const vector<Product>& bufferDatabase, bool isTxtDatabase, bool isBenchmark);
+void restore(const string& filename, vector<Product>& database, bool isTxtDatabase, bool isBenchmark);
 void readAllDatabase(vector<Product>& bufferDatabase);
 void searchElementsManage(vector<Product>& bufferDatabase);
 vector<Product> search(vector<Product> bufferDatabase, bool name, string fragment, bool numOfUnit, double diaposoneStart, double diaposoneEnd, bool checkDate, date startDate);
 void modifyElement(vector<Product>& bufferDatabase);
 void delElement(vector<Product>& bufferDatabase);
-
-//Векторна база даних
-void VectorDatabase();
-
-void benchmarkMode();
-void demonstrationMode();
 
 Product generateRandomElement();
 string generateString(int len);
@@ -184,13 +185,13 @@ int main()
     cout << "\n--- Database loaded successfully! ---\n";
     int mode;
     string filename;
-    mode = getValidInput<int>("Please, select a number of mode:\n1. Database management\n2. Demontstration mode \n3. Benchmark\nMode: ");
+    mode = getValidInput<int>("Please, select a number of mode:\n1. Database management\n2. Demonstration mode \n3. Benchmark mode:\nEnter a number of database: ");
 
     switch (mode)
     {
     case 1:
         int modeManagement;
-        modeManagement = getValidInput<int>("\nPlease, select a number of database:\n1. Vector Database \n2. TXT File Database\n3. Bin File Database\nDatabase: ");;
+        modeManagement = getValidInput<int>("\nPlease, select a number of database:\n1. Vector Database \n2. TXT File Database\n3. Bin File Database\nEnter a number of database: ");;
         switch (modeManagement)
         {
         case 1:
@@ -205,7 +206,7 @@ int main()
             DatabaseManagement(filename, !txtDatabse);
             break;
         default:
-            cerr << "Error! You enter incoretct database\n";
+            cerr << "Error! You choised incorrect database\n";
             break;
         }
         break;
@@ -236,10 +237,18 @@ void DatabaseManagement(const string& filename, bool isTxtDatabse)
     vector<Product> bufferDatabase; //Масив для збереження тимчасових елементів
     restore(filename, bufferDatabase, isTxtDatabse, !benchmark);
 
+    cout << "\nHere you can manage the text database.\n";
     while (manage)
     {
-        cout << "\nHere you can manage the text database. Please select a operation: \n";
-        cout << "0. Exit\n1. Add element to database\n2. Record date to file\n3. Restore database\n4. Output database\n5. Searh for an product by criteria\n6. Modify an element\n7. Delete database or element\n";
+        cout << "Please select a operation: \n"
+                "1. Add an element to the database buffer\n"
+                "2. Record database to the file\n"
+                "3. Restore database to the database buffer\n"
+                "4. Print the database\n"
+                "5. Search an element in database by criterias\n"
+                "6. Modify an element in the database\n"
+                "7. Delete all database buffet or delete an element in database buffer\n"
+                "0. Exit\n";
         int operation;
         operation = getValidInput<int>("Please enter a number of operation: ");
 
@@ -270,12 +279,12 @@ void DatabaseManagement(const string& filename, bool isTxtDatabse)
             delElement(bufferDatabase);
             break;
         default:
-            cerr << "Error! You enter incoretct mode\n";
+            cerr << "\n### Error! You enter incorect mode! ###\n";
             break;
         }
     }
 
-    cout << "\n=== Text database file '" << filename << "' has been created/updated. ===\n";
+    cout << "\n=== Text database file '" << filename << "' has been created/updated! ===\n";
     outputFile.close();
 }
 void VectorDatabase()
@@ -328,211 +337,84 @@ void VectorDatabase()
 
     cout << "\n=== Vector Database has been deleted. ===\n";
 }
-
-void addElement(vector<Product>& bufferDatabase, bool randomElement, bool isBenchmark)
+void demonstrationMode()
 {
-    Product newProduct;
-    if (!randomElement) newProduct.getInfo();
-    else newProduct = generateRandomElement();
-    bufferDatabase.empty() ? newProduct.id = 1 : newProduct.id = bufferDatabase[bufferDatabase.size() - 1].id + 1;
-    bufferDatabase.push_back(newProduct);
-    if (!isBenchmark) cout << "\n=== Product added to buffer successfully. ===\n";
-}
-void recordDatabase(const string& filename, const vector<Product>& bufferDatabase, bool isTxtDatabse, bool isBenchmark)
-{
-    ofstream clearFile(filename, ios::trunc);
-    clearFile.close();
-    ios_base::openmode fileMode = isTxtDatabse ? ios::in : ios::in | ios::binary;
-    ofstream outputFile(filename, fileMode);
+    bool manage = true;
+    date zeroValueDate(0, 0, 0, 0, 0, 0);
+    vector<Product> bufferDatabase, demonstrationDatabase; // Масив для збереження тимчасових елементів
+    cout << "\n=== START DEMONSTRATION MODE ===\n";
+    this_thread::sleep_for(chrono::seconds(1));
 
-    if (!outputFile.is_open())
+    cout << "\n\n--- ADD 5 ELEMENTS TO DATABASE ---\n\n";
+    this_thread::sleep_for(chrono::seconds(1));
+    for (int i = 0; i < 5; i++)
     {
-        cerr << "\n### Error opening the file " << filename << "###\n";
-        return;
+        addElement(bufferDatabase, true, false);
     }
+    cout << "\n=== Elements added succesfully! ===\n";
+    this_thread::sleep_for(chrono::seconds(1));
 
-    for (const Product& product : bufferDatabase)
-    {
-        outputFile << product.id << ' ' << product.name << ' ' << product.unit << ' ' << product.quantity << ' ';
-        outputFile << product.production_date.year << ' ' << product.production_date.month << ' ' << product.production_date.day << ' ';
-        outputFile << product.production_date.hour << ' ' << product.production_date.minute << ' ' << product.production_date.second << ' ';
-        outputFile << product.shelf_life << '\n';
-    }
+    cout << "\n\n--- SAVE THE DATABASE ---\n\n";
+    this_thread::sleep_for(chrono::seconds(1));
+    demonstrationDatabase = bufferDatabase;
+    cout << "\n=== Database saved successfully! ===\n";
+    this_thread::sleep_for(chrono::seconds(1));
 
-    if (!isBenchmark) cout << "\n=== Database has been recorded to the file '" << filename << "'. ===\n";
-    outputFile.close();
-}
-void readAllDatabase(vector<Product>& readVector)
-{
-    readVector.empty() == 0 ? cout << "\nAll element in databse: \n" : cout << "\n### Darabase is clear! ###\n";
-    for (auto& p : readVector)
-      p.printInfo();
+    cout << "\n\n--- RECORD THE DATABASE ---\n\n";
+    this_thread::sleep_for(chrono::seconds(1));
+    bufferDatabase = demonstrationDatabase;
+    cout << "\n=== Database was recorded successfully! ===\n";
+    this_thread::sleep_for(chrono::seconds(1));
 
-}
-void restore(const string& filename, vector<Product>& bufferDatabase, bool isTxtDatabse, bool isBenchmark)
-{
-    ios_base::openmode fileMode = isTxtDatabse ? ios::out : ios::out | ios::binary ;
-    ifstream readFile(filename, fileMode);
-    bufferDatabase.clear();
+    cout << "\n\n--- PRINT THE DATABASE ---\n\n";
+    this_thread::sleep_for(chrono::seconds(1));
+    readAllDatabase(bufferDatabase);
+    cout << "\n=== Database was read successfully! ===\n";
+    this_thread::sleep_for(chrono::seconds(1));
 
-    if (!readFile.is_open()) {
-        cerr << "\n### Error opening the file " << filename << ". ###\n";
-        return;
-    }
+    cout << "\n\n--- SEARCH THE DATABASE FOR ALL ELEMENTS STARTING WITH THE LETTER 'A' AND HAVING A NUMBER FROM 0 TO 100 -- - \n\n";
+    this_thread::sleep_for(chrono::seconds(1));
+    vector<Product> name = search(bufferDatabase, true, "a", true, 0, 100, false, zeroValueDate);
 
-    Product product;
-    while (readFile >> product.id >> product.name >> product.unit >> product.quantity
-        >> product.production_date.year >> product.production_date.month >> product.production_date.day
-        >> product.production_date.hour >> product.production_date.minute >> product.production_date.second
-        >> product.shelf_life)
-    {
-
-        bufferDatabase.push_back(product);
-    }
-
-    if (!isBenchmark) cout << "\n=== Database has been restored/copy from the file " << filename << " to buffer. ===\n";
-    readFile.close();
-}
-void searchElementsManage(vector<Product>& bufferDatabase) {
-    vector<Product> allCoincidence;
-    string fragment;
-    double diaposoneStart = 0, diaposoneEnd = 0;
-    date startDate = { 0 };
-    bool name = false, numOfUnit = false, checkDate = false;
-    int criterion;
-    do {
-        criterion = getValidInput<int>("Select criterion:\n""1. Name\n2. Numbers of units\n3. Date\nPlease, enter a number criterion or `0` for exit: ");
-        switch (criterion) {
-        case 0:
-            break;
-        case 1:
-            fragment = getValidInput<string>("Enter a name of product: ");
-            name = true;
-            break;
-        case 2:
-            cout << "\n=== Enter a range units ===\n";
-            do { diaposoneStart = getValidInput<double>("Enter the smallest value: "); } while (diaposoneStart < 0);
-            do { diaposoneEnd = getValidInput<double>("Enter the greatest value: "); } while (diaposoneStart < 0);
-            numOfUnit = true;
-            break;
-        case 3:
-            cout << "Enter start date (YYYY MM DD HH MM SS): ";
-            startDate.getDate();
-            checkDate = true;
-            break;
-        default:
-            cerr << "\n### You entered a wrong number ###\n";
-            break;
-        }
-    } while (criterion != 0);
-
-    if (!name && !numOfUnit && !checkDate) {
-        cout << "\n### You didn't select any criterion ###\n";
-        return;
-    }
-
-    allCoincidence = search(bufferDatabase, name, fragment, numOfUnit, diaposoneStart, diaposoneEnd, checkDate, startDate);
-
-    if (allCoincidence.empty()) cout << "\n### Elemetnts didn`t founded! ###\n";
-    else  for (auto& p : allCoincidence) { p.printInfo(); }
-}
-vector<Product> search(vector<Product> bufferDatabase, bool name, string fragment, bool numOfUnit, double diaposoneStart, double diaposoneEnd, bool checkDate, date startDate)
-{
-    vector<Product> allCoincidence;
-    for (int i = 0; i < bufferDatabase.size(); i++)
-    {
-        if ((name && bufferDatabase[i].name.find(fragment) != 0) ||
-            (numOfUnit && (bufferDatabase[i].quantity > diaposoneEnd ||
-                bufferDatabase[i].quantity < diaposoneStart)) || (checkDate && startDate > bufferDatabase[i].production_date))
-            continue;
-        allCoincidence.push_back(bufferDatabase[i]);
-    }
-    return allCoincidence;
-}
-void modifyElement(vector<Product>& bufferDatabase)
-{
-    int idModify;
-    idModify = getValidInput<int>("\nEnter id of the element which you want to modify: ");
-    for (int i = 0; i < bufferDatabase.size(); i++)
-    {
-        if (bufferDatabase[i].id == idModify)
-        {
-            cout << "\n=== Element founded! ===\n";
-            int operation;
-            bool changed = false;
-            do
-            {
-                changed ? cout << "\nDo you want to change anything else?n\n" : cout << "\nWhat do you want to change?\n";
-                operation = getValidInput<int>("0. Nothing\n1. Name\n2. Unit\n3. Quantity\n4. Production date\n5. shelf life\nEnter opetarion: ");
-                changed = true;
-
-                switch (operation)
-                {
-                case 0:
-                    break;
-                case 1:
-                    bufferDatabase[i].name = getValidInput<string>("Enter a new name: ");
-                    cout << "\n=== Name changed succesfully! ===\n";
-                    break;
-                case 2:
-                    bufferDatabase[i].unit = getValidInput<string>("Enter a new unit: ");
-                    cout << "\n=== Unit changed succesfully! ===\n";
-                    break;
-                case 3:
-                    do { bufferDatabase[i].quantity = getValidInput<double>("Enter a new quantity: "); } while (bufferDatabase[i].quantity < 0);
-                    cout << "\n=== Quantity changed succesfully! ===\n";
-                    break;
-                case 4:
-                    cout << "Enter a new production date: ";
-                    bufferDatabase[i].production_date.getDate();
-                    cout << "\n=== Production date changed succesfully! ===\n";
-                    break;
-                case 5:
-                    do { bufferDatabase[i].shelf_life = getValidInput<int>("Enter a new shelf life(in days. Days must be less than 3660): "); } while (bufferDatabase[i].shelf_life < 0 || bufferDatabase[i].shelf_life > 3660);
-                    cout << "\n=== Shelf life changed succesfully! ===\n";
-                    break;
-                default:
-                    cout << "\n### You enter wrong number! ###\n";
-                    break;
-                }
-            } while (operation != 0);
-            break;
-        }
-    }
-}
-void delElement(vector<Product>& bufferDatabase)
-{
-    int operation;
-    operation = getValidInput<int>("\nSelect operation for delete:\n0. Exit\n1. Delete element by id\n2. Delete all data in database\nEnter operation: ");
-    if (operation <= 0 || operation > 2) return;
-
-    if (operation == 1)
-    {
-        int delId;
-        delId = getValidInput<int>("Enter a id file which you want to delete: ");
-        bool deleted;
-        Product product;
-        for (int i = 0; i < bufferDatabase.size(); i++)
-        {
-            if (bufferDatabase[i].id == delId)
-            {
-                deleted = true;
-                bufferDatabase.erase(bufferDatabase.begin() + i);
-            }
-        }
-
-        if (deleted) cout << "\n=== Element with id " << delId << " was deleted! ===\n";
-        else  cout << "\n### Element with id " << delId << " wasn`t deleted! ###\n";
-
-        return;
-    }
+    if (name.empty() != 0)
+        cout << "\n### Elements not founded! ###\n";
     else
     {
-        bufferDatabase.clear();
-        cout << "\n=== Data was deleted succesfully! ===\n";
+        cout << "\nAll founded elements: \n";
+        this_thread::sleep_for(chrono::seconds(1));
+        for (auto& p : name)
+            p.printInfo();
     }
-}
+    this_thread::sleep_for(chrono::seconds(1));
 
+    cout << "\n\n--- CHANGE ELEMENT WITH 1 ID IN DATABASE. CHANGE THE ELEMENT NAME TO 'MILK' --- \n\n";
+    this_thread::sleep_for(chrono::seconds(1));
+    bufferDatabase[0].name = "Milk";
+    cout << "\n=== Name changed succesfully! === \n";
+    this_thread::sleep_for(chrono::seconds(1));
+
+    cout << "\n\n--- DELETE ELEMENT WITH ID 5 IN THE DATABASE ---\n\n";
+    this_thread::sleep_for(chrono::seconds(1));
+    bufferDatabase.erase(bufferDatabase.begin() + 4);
+    cout << "\n=== Element with ID 5 was deleted! ===\n";
+
+    cout << "\n\n--- SAVE THE DATABASE ---\n\n";
+    this_thread::sleep_for(chrono::seconds(1));
+    demonstrationDatabase = bufferDatabase;
+    cout << "\n=== Database was saved successfully! ===\n";
+    this_thread::sleep_for(chrono::seconds(1));
+
+    cout << "\n\n--- PRINT THE DATABASE ---\n\n";
+    this_thread::sleep_for(chrono::seconds(1));
+    readAllDatabase(bufferDatabase);
+    this_thread::sleep_for(chrono::seconds(1));
+    cout << "\n=== Database was read successfully! ===\n";
+    this_thread::sleep_for(chrono::seconds(1));
+
+    cout << "\n\n--- EXIT ---\n\n";
+    this_thread::sleep_for(chrono::seconds(1));
+    cout << "\n=== DATABASE CLOSE ===";
+}
 void benchmarkMode()
 {
     cout << "\n=== Benchmark mode ===\n";
@@ -540,6 +422,7 @@ void benchmarkMode()
     string txt = "benchmarkTxt.txt", bin = "benchmarkBin.bin";
     fstream benchmarkTxt(txt, ios::app), benchmarkBin(bin, ios::app | ios::binary);
     vector<Product> benchmarkVector, searching;
+    date zeroValueDate(0, 0, 0, 0, 0, 0);
 
     int num;
     do { num = getValidInput<int>("Enter a number of element for database: "); } while (num < 1);
@@ -582,7 +465,7 @@ void benchmarkMode()
         auto startTimeSearchAll = chrono::high_resolution_clock::now();
 
         auto startTimeSearchName = chrono::high_resolution_clock::now();
-        vector<Product> searching = search(buffer, findName, generateString(rand() % 3 + 1), !findNumOfUnit, ZeroValue, ZeroValue, !findDate, { ZeroValue });
+        vector<Product> searching = search(buffer, findName, generateString(rand() % 3 + 1), !findNumOfUnit, ZeroValue, ZeroValue, !findDate, zeroValueDate);
         auto endTimeSearchName = chrono::high_resolution_clock::now();
 
         double startDiap = static_cast<double>(rand() % 1000) / 10.0;
@@ -590,7 +473,7 @@ void benchmarkMode()
         if (startDiap > endDiap) swap(startDiap, endDiap);
 
         auto startTimeSearchQuantity = chrono::high_resolution_clock::now();
-        searching = search(buffer, !findName, "", findNumOfUnit, startDiap, endDiap, !findDate, { ZeroValue });
+        searching = search(buffer, !findName, "", findNumOfUnit, startDiap, endDiap, !findDate, zeroValueDate);
         auto endTimeSearchQuantity = chrono::high_resolution_clock::now();
 
         auto startTimeSearchDate = chrono::high_resolution_clock::now();
@@ -610,14 +493,14 @@ void benchmarkMode()
         auto durationRestore = chrono::duration_cast<chrono::milliseconds>(endTimeRestore - startTimeRestore);
         cout << "\n=============================\n";
         cout << "\nTime add: " << durationAdd.count();
-        cout << "\nTime record: " << durationRecord.count();
-        cout << "\nTime restore: " << durationRestore.count();
-        cout << "\nSearch by name: " << durationSearchName.count();
-        cout << "\nSearch by quantity: " << durationSearchDate.count();
-        cout << "\nSearch by date: " << durationSearchDate.count();
-        cout << "\nSearch by all: " << durationSearchAll.count();
-        cout << "\nFull work time: " << duration.count();
-        cout << "\nSize: " << sizeof(buffer[0]) * num / 1024.0 / 1024.0 << " Mb \n";
+        cout << "\nRecording time: " << durationRecord.count();
+        cout << "\nRestore time: " << durationRestore.count();
+        cout << "\nSearch time by name: " << durationSearchName.count();
+        cout << "\nSearch time by quantity: " << durationSearchDate.count();
+        cout << "\nSearch time by date: " << durationSearchDate.count();
+        cout << "\nTotal search time: " << durationSearchAll.count();
+        cout << "\nTotal working time: " << duration.count();
+        if (mode == 0) cout << "\nSize: " << sizeof(buffer[0]) * num / 1024.0 / 1024.0 << " Mb \n";
         cout << "\n=============================\n";
 
     }
@@ -628,82 +511,212 @@ void benchmarkMode()
     cout << "\n\n=== BENCHMARK OVER ===\n";
 
 }
-void demonstrationMode()
+
+void addElement(vector<Product>& bufferDatabase, bool randomElement, bool isBenchmark)
 {
-    bool manage = true;
-    vector<Product> bufferDatabase, demonstationBase; // Масив для збереження тимчасових елементів
-    cout << "\n=== START DEMONSTRATION ===\n";
-    this_thread::sleep_for(chrono::seconds(1));
+    Product newProduct;
+    if (!randomElement) newProduct.getInfo();
+    else newProduct = generateRandomElement();
+    bufferDatabase.empty() ? newProduct.id = 1 : newProduct.id = bufferDatabase[bufferDatabase.size() - 1].id + 1;
+    bufferDatabase.push_back(newProduct);
+    if (!isBenchmark) cout << "\n=== Product added to database buffer successfully! ===\n";
+}
+void recordDatabase(const string& filename, const vector<Product>& bufferDatabase, bool isTxtDatabase, bool isBenchmark)
+{
+    ofstream clearFile(filename, ios::trunc);
+    clearFile.close();
+    ios_base::openmode fileMode = isTxtDatabase ? ios::in : ios::in | ios::binary;
+    ofstream outputFile(filename, fileMode);
 
-    cout << "\n\n--- Let's add 5 elements ---\n\n";
-    this_thread::sleep_for(chrono::seconds(1));
-    for (int i = 0; i < 5; i++)
+    if (!outputFile.is_open())
     {
-        addElement(bufferDatabase, true, false);
+        cerr << "\n### Error opening the file '" << filename << "'! ###\n";
+        return;
     }
-    cout << "\n=== Elements added succesfully! ===\n";
-    this_thread::sleep_for(chrono::seconds(1));
 
-    cout << "\n\n--- Let's save the database ---\n\n";
-    this_thread::sleep_for(chrono::seconds(1));
-    demonstationBase = bufferDatabase;
-    cout << "\n=== Database was saved successfully! ===\n";
-    this_thread::sleep_for(chrono::seconds(1));
+    for (const Product& product : bufferDatabase)
+    {
+        outputFile << product.id << ' ' << product.name << ' ' << product.unit << ' ' << product.quantity << ' ';
+        outputFile << product.production_date.year << ' ' << product.production_date.month << ' ' << product.production_date.day << ' ';
+        outputFile << product.production_date.hour << ' ' << product.production_date.minute << ' ' << product.production_date.second << ' ';
+        outputFile << product.shelf_life << '\n';
+    }
 
-    cout << "\n\n--- Let's record the database ---\n\n";
-    this_thread::sleep_for(chrono::seconds(1));
-    bufferDatabase = demonstationBase;
-    cout << "\n=== Database was recorded successfully! ===\n";
-    this_thread::sleep_for(chrono::seconds(1));
+    if (!isBenchmark) cout << "\n=== Database has been recorded to the file '" << filename << "'! ===\n";
+    outputFile.close();
+}
+void readAllDatabase(vector<Product>& readVector)
+{
+    readVector.empty() == 0 ? cout << "\nAll element in databse: \n" : cout << "\n### Database buffer is clear! ###\n";
+    for (auto& p : readVector)
+      p.printInfo();
+}
+void restore(const string& filename, vector<Product>& bufferDatabase, bool isTxtDatabase, bool isBenchmark)
+{
+    ios_base::openmode fileMode = isTxtDatabase ? ios::out : ios::out | ios::binary ;
+    ifstream readFile(filename, fileMode);
+    bufferDatabase.clear();
 
-    cout << "\n\n--- Let's output the database ---\n\n";
-    this_thread::sleep_for(chrono::seconds(1));
-    readAllDatabase(bufferDatabase);
-    cout << "\n=== Database was read successfully! ===\n";
-    this_thread::sleep_for(chrono::seconds(1));
+    if (!readFile.is_open()) {
+        cerr << "\n### Error opening the file '" << filename << "'! ###\n";
+        return;
+    }
 
-    cout << "\n\n--- Let's search all elements starting with the letter 'a' and with quantity between 0 - 100 in the database ---\n\n";
-    this_thread::sleep_for(chrono::seconds(1));
-    vector<Product> name = search(bufferDatabase, true, "a", true, 0, 100, false, { 0 });
+    Product product;
+    while (readFile >> product.id >> product.name >> product.unit >> product.quantity
+        >> product.production_date.year >> product.production_date.month >> product.production_date.day
+        >> product.production_date.hour >> product.production_date.minute >> product.production_date.second
+        >> product.shelf_life)
+    {
 
-    if (name.empty() != 0)
-        cout << "\n### Elements not founded! ###\n";
+        bufferDatabase.push_back(product);
+    }
+
+    if (!isBenchmark) cout << "\n=== Database has been restored/copy from the file '" << filename << "' to database buffer. ===\n";
+    readFile.close();
+}
+void searchElementsManage(vector<Product>& bufferDatabase) {
+    vector<Product> allCoincidence;
+    string fragment;
+    double diaposoneStart = 0, diaposoneEnd = 0;
+    date startDate = { 0 };
+    bool name = false, numOfUnit = false, checkDate = false;
+    int criterion;
+    do {
+        criterion = getValidInput<int>("Select criterion:\n1. Product name\n2. Quantity of products: \n3. Date of manufacture of the product\n0. Exit\nPlease, enter a number of criterion:");
+        switch (criterion) {
+        case 0:
+            break;
+        case 1:
+            fragment = getValidInput<string>("Enter a product name: ");
+            name = true;
+            break;
+        case 2:
+            cout << "\n=== Enter the range of the number of products ===\n";
+            do { diaposoneStart = getValidInput<double>("Enter the smallest value: "); } while (diaposoneStart < 0);
+            do { diaposoneEnd = getValidInput<double>("Enter the greatest value: "); } while (diaposoneStart < 0);
+            numOfUnit = true;
+            break;
+        case 3:
+            cout << "Enter start date (YYYY MM DD HH MM SS): ";
+            startDate.getDate();
+            checkDate = true;
+            break;
+        default:
+            cerr << "\n### You entered a wrong number! ###\n";
+            break;
+        }
+    } while (criterion != 0);
+
+    if (!name && !numOfUnit && !checkDate) {
+        cout << "\n### You didn't select any criterion! ###\n";
+        return;
+    }
+
+    allCoincidence = search(bufferDatabase, name, fragment, numOfUnit, diaposoneStart, diaposoneEnd, checkDate, startDate);
+
+    if (allCoincidence.empty()) cout << "\n### Products didn`t founded! ###\n";
+    else 
+    {
+        cout << "\nFounded products: \n";
+        for(auto & p : allCoincidence) { p.printInfo(); }
+    }
+}
+vector<Product> search(vector<Product> bufferDatabase, bool name, string fragment, bool numOfUnit, double diaposoneStart, double diaposoneEnd, bool checkDate, date startDate)
+{
+    vector<Product> allCoincidence;
+    for (int i = 0; i < bufferDatabase.size(); i++)
+    {
+        if ((name && bufferDatabase[i].name.find(fragment) != 0) ||
+            (numOfUnit && (bufferDatabase[i].quantity > diaposoneEnd ||
+                bufferDatabase[i].quantity < diaposoneStart)) || (checkDate && startDate > bufferDatabase[i].production_date))
+            continue;
+        allCoincidence.push_back(bufferDatabase[i]);
+    }
+    return allCoincidence;
+}
+void modifyElement(vector<Product>& bufferDatabase)
+{
+    int idModify;
+    idModify = getValidInput<int>("\nEnter the ID of the item you want to change: ");
+    for (int i = 0; i < bufferDatabase.size(); i++)
+    {
+        if (bufferDatabase[i].id == idModify)
+        {
+            cout << "\n=== Product founded! ===\n";
+            int operation;
+            bool changed = false;
+            do
+            {
+                changed ? cout << "\nDo you want to change anything else?\n" : cout << "\nWhat do you want to change?\n";
+                operation = getValidInput<int>("1. Product name\n2. Product unit\n3. Quantity of products\n4. Product production date\n5. Product shelf life\n0. Nothing\nEnter opetarion: ");
+                changed = true;
+
+                switch (operation)
+                {
+                case 0:
+                    break;
+                case 1:
+                    bufferDatabase[i].name = getValidInput<string>("Enter a new name: ");
+                    cout << "\n=== Name changed succesfully! ===\n";
+                    break;
+                case 2:
+                    bufferDatabase[i].unit = getValidInput<string>("Enter a new unit: ");
+                    cout << "\n=== Unit changed succesfully! ===\n";
+                    break;
+                case 3:
+                    do { bufferDatabase[i].quantity = getValidInput<double>("Enter a new quantity: "); } while (bufferDatabase[i].quantity < 0);
+                    cout << "\n=== Quantity changed succesfully! ===\n";
+                    break;
+                case 4:
+                    cout << "Enter a new production date: ";
+                    bufferDatabase[i].production_date.getDate();
+                    cout << "\n=== Production date changed succesfully! ===\n";
+                    break;
+                case 5:
+                    do { bufferDatabase[i].shelf_life = getValidInput<int>("Enter a new shelf life(in days. Days must be less than 3660): "); } while (bufferDatabase[i].shelf_life < 0 || bufferDatabase[i].shelf_life > 3660);
+                    cout << "\n=== Shelf life changed succesfully! ===\n";
+                    break;
+                default:
+                    cout << "\n### You enter wrong number! ###\n";
+                    break;
+                }
+            } while (operation != 0);
+            break;
+        }
+    }
+}
+void delElement(vector<Product>& bufferDatabase)
+{
+    int operation;
+    operation = getValidInput<int>("\nSelect operation for delete:\n1. Delete element in database buffer\n2. Delete all database buffer\n0. Exit\nEnter operation: ");
+    if (operation <= 0 || operation > 2) return;
+
+    if (operation == 1)
+    {
+        int delId;
+        delId = getValidInput<int>("Enter the ID of the product you want to share: ");
+        bool deleted;
+        Product product;
+        for (int i = 0; i < bufferDatabase.size(); i++)
+        {
+            if (bufferDatabase[i].id == delId)
+            {
+                deleted = true;
+                bufferDatabase.erase(bufferDatabase.begin() + i);
+            }
+        }
+
+        if (deleted) cout << "\n=== Product with id " << delId << " deleted! ===\n";
+        else  cout << "\n### Element with id " << delId << " didn`t deleted! ###\n";
+
+        return;
+    }
     else
     {
-        cout << "\nAll founded elements: \n";
-        this_thread::sleep_for(chrono::seconds(1));
-        for (auto& p : name)
-            p.printInfo();
+        bufferDatabase.clear();
+        cout << "\n=== Database buffer deleted succesfully! ===\n";
     }
-    this_thread::sleep_for(chrono::seconds(1));
-
-    cout << "\n\n--- Let`s modify element by 1 id in database. Change name 'Milk' --- \n\n";
-    this_thread::sleep_for(chrono::seconds(1));
-    bufferDatabase[0].name = "Milk";
-    cout << "\n=== Name changed succesfully! === \n";
-    this_thread::sleep_for(chrono::seconds(1));
-
-    cout << "\n\n--- Let's delete the element with ID 5 in the database ---\n\n";
-    this_thread::sleep_for(chrono::seconds(1));
-    bufferDatabase.erase(bufferDatabase.begin() + 4);
-    cout << "\n=== Element with ID 5 was deleted! ===\n";
-
-    cout << "\n\n--- Let's save the database again ---\n\n";
-    this_thread::sleep_for(chrono::seconds(1));
-    demonstationBase = bufferDatabase;
-    cout << "\n=== Database was saved successfully! ===\n";
-    this_thread::sleep_for(chrono::seconds(1));
-
-    cout << "\n\n--- Let's output the database again ---\n\n";
-    this_thread::sleep_for(chrono::seconds(1));
-    readAllDatabase(bufferDatabase);
-    this_thread::sleep_for(chrono::seconds(1));
-    cout << "\n=== Database was read successfully! ===\n";
-    this_thread::sleep_for(chrono::seconds(1));
-
-    cout << "\n\n--- Let's exit ---\n\n";
-    this_thread::sleep_for(chrono::seconds(1));
-    cout << "\n=== DATABASE CLOSE ===";
 }
 
 Product generateRandomElement()
