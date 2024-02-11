@@ -1,3 +1,9 @@
+/*
+Реалізувати структуру даних Unrolled link list (див. наприклад https://en.wikipedia.org/wiki/Unrolled_linked_list ). 
+Операції стандартні для списків – обхід (в обох напрямках), додавання елементу (в кінець, початок або довільну позицію), 
+видалення елементу, доступ за індексом, пошук за значенням.
+*/
+
 #include <iostream>
 #include <chrono>
 #include <thread>
@@ -31,6 +37,13 @@ T getValidInput(const string& prompt) {
 struct point
 {
 	double x, y, z;
+
+	point(int x = int(), int y = int(), int z = int())
+	{
+		this->x = x;
+		this->y = y;
+		this->z = z;
+	}
 
 	friend ostream& operator<<(ostream& os, const point& object)
 	{
@@ -427,13 +440,14 @@ public:
 	}
 };
 
-void demonstrationMode();
 void interactiveMode();
+void demonstrationMode();
 void benchmarkMode();
 
-point randomPoint();
 void menu();
 DataStructure selectDataStructure();
+
+point randomPoint();
 
 int main()
 {
@@ -498,7 +512,8 @@ DataStructure selectDataStructure() {
 }
 point randomPoint()
 {
-	return { rand() / 10000.0, rand() / 10000.0, rand() / 10000.0, };
+	point random(rand() / 10000.0, rand() / 10000.0, rand() / 10000.0);
+	return random;
 }
 
 void demonstrationMode()
@@ -519,9 +534,10 @@ void demonstrationMode()
 		cout << "\n=== ADD 5 ELEMENTS ===\n";
 		for (int i = 1; i < 6; i++)
 		{
-			if (mode == 0) myArray.append({ static_cast<double>(i) });
-			else if (mode == 1) myDynamicArray.append({ static_cast<double>(i) });
-			else if (mode == 2) myList.append({ static_cast<double>(i) });
+			point temp(i, i, i);
+			if (mode == 0) myArray.append(temp);
+			else if (mode == 1) myDynamicArray.append(temp);
+			else if (mode == 2) myList.append(temp);
 		}
 
 		this_thread::sleep_for(chrono::seconds(1));
@@ -533,10 +549,11 @@ void demonstrationMode()
 
 		this_thread::sleep_for(chrono::seconds(1));
 		cout << "\n=== ADD 1 MORE ELEMENT ===\n";
+		point addTemp(0, 0, 0);
 		this_thread::sleep_for(chrono::seconds(1));
-		if (mode == 0) myArray.append({0});
-		else if (mode == 1) myDynamicArray.append({0});
-		else if (mode == 2) myList.append({ 0 });
+		if (mode == 0) myArray.append(addTemp);
+		else if (mode == 1) myDynamicArray.append(addTemp);
+		else if (mode == 2) myList.append(addTemp);
 
 		cout << "\n=== REMOVE 0 INDEX ELEMENT ===\n";
 		this_thread::sleep_for(chrono::seconds(1));
@@ -544,17 +561,19 @@ void demonstrationMode()
 		else if (mode == 1) myDynamicArray.remove(0);
 		else if (mode == 2) myList.remove(0);
 
-		cout << "\n=== INSERT {10, 0, 0} BEFORE 1 INDEX ELEMENT ===\n";
+		cout << "\n=== INSERT {10, 10, 10} BEFORE 1 INDEX ELEMENT ===\n";
+		point insertTemp(10, 10, 10);
 		this_thread::sleep_for(chrono::seconds(1));
-		if (mode == 0) myArray.insert({10}, 0);
-		else if (mode == 1) myDynamicArray.insert({ 10 }, 0);
-		else if (mode == 2) myList.insert({ 10 }, 0);
+		if (mode == 0) myArray.insert(insertTemp, 0);
+		else if (mode == 1) myDynamicArray.insert(insertTemp, 0);
+		else if (mode == 2) myList.insert(insertTemp, 0);
 
 		cout << "\n=== SET {8, 0, 0} ON 4 INDEX ELEMENT ===\n";
+		point setTemp(8, 10, 10);
 		this_thread::sleep_for(chrono::seconds(1));
-		if (mode == 0) 	myArray.set({ 8 }, 4);
-		else if (mode == 1) myDynamicArray.set({ 8 }, 4);
-		else if (mode == 2) myList.set({ 8 }, 4);
+		if (mode == 0) 	myArray.set(setTemp, 4);
+		else if (mode == 1) myDynamicArray.set(setTemp, 4);
+		else if (mode == 2) myList.set(setTemp, 4);
 
 		this_thread::sleep_for(chrono::seconds(1));
 		cout << "\n=== PRINT ARRAY ===\n";
@@ -579,10 +598,11 @@ void demonstrationMode()
 
 		this_thread::sleep_for(chrono::seconds(1));
 		cout << "\n=== FIND {8, 0, 0} ELEMENT INDEX ===\n";
+		point findTemp(8, 0, 0);
 		this_thread::sleep_for(chrono::seconds(1));
-		if (mode == 0) 	cout << "Index: " << myArray.find({ 8, 0, 0 }) << "\n";
-		else if (mode == 1) cout << "Index: " << myDynamicArray.find({ 8, 0, 0 }) << "\n";
-		else if (mode == 2) cout << "Size: " << myList.find({8, 0, 0}) << "\n";
+		if (mode == 0) 	cout << "Index: " << myArray.find(findTemp) << "\n";
+		else if (mode == 1) cout << "Index: " << myDynamicArray.find(findTemp) << "\n";
+		else if (mode == 2) cout << "Size: " << myList.find(findTemp) << "\n";
 	}
 	cout << "\n=== DEMONSTRATION END ===";
 }
@@ -700,9 +720,10 @@ void benchmarkMode()
 		auto startTimeAdd = chrono::high_resolution_clock::now();
 		for (int i = 1; i < numOperation; i++)
 		{
-			if (mode == 0) myArray.append({ static_cast<double>(i) });
-			else if (mode == 1) myDynamicArray.append({ static_cast<double>(i) });
-			else if (mode == 2) myList.append({ static_cast<double>(i) });
+			point temp(i, i, i);
+			if (mode == 0) myArray.append(temp);
+			else if (mode == 1) myDynamicArray.append(temp);
+			else if (mode == 2) myList.append(temp);
 		}
 		auto endTimeAdd = chrono::high_resolution_clock::now();
 
@@ -761,7 +782,7 @@ void benchmarkMode()
 		cout << "Duration Insert: " << durationInsert.count() << " milliseconds\n";
 		cout << "Duration Set: " << durationSet.count() << " milliseconds\n";
 		cout << "Duration Get: " << durationGet.count() << " milliseconds\n";
-		cout << "Duration: " << duration.count() << " milliseconds\n";
+		cout << "Duration: " << duration.count() / 1000.0<< " seconds\n";
 	}
 	cout << "\n=== BENCHMARK MODE END ===\n";
 }
