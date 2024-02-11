@@ -116,9 +116,9 @@ public:
                 visitedCount++;
             }
 
+            if (printTraverse) cout << currentNode->value << " ";
             if (visitedCount == size) break;
 
-            if (printTraverse) cout << currentNode->value << " ";
             steps++;
             if (rand() / static_cast<double>(RAND_MAX) < p_follow && currentNode->shortcut != nullptr)
             {
@@ -161,15 +161,116 @@ public:
     }
 };
 
+void interactiveMode();
 void demonstrationMode();
 void benchmarkMode();
+
+template <typename T>
+T getValidInput(const string& prompt);
 
 int main() 
 {
     srand(time(NULL));
-    //demonstrationMode();
-    benchmarkMode();
+    int modeChoice;
+    cout << "Select mode:\n"
+        "1. Interactive Mode\n"
+        "2. Demonstration Mode\n"
+        "3. Benchmark Mode\n"
+        "0. Exit\n";
+    modeChoice = getValidInput<int>("Your choice: ");
+
+    switch (modeChoice) {
+    case 0:
+        break;
+    case 1:
+        interactiveMode();
+        break;
+    case 2:
+        demonstrationMode();
+        break;
+    case 3:
+        benchmarkMode();
+        break;
+    default:
+        cout << "\n### Invalid mode selected! ###\n";
+    }
     return 0;
+}
+
+void interactiveMode()
+{
+    int N, operation;
+    double p_add, p_follow;
+    RandomShortcutList* list = nullptr;
+    cout << "\n=== INTERACTIVE MODE === \n";
+
+    do
+    {
+        cout << "\nInttecive mode:\n"
+                "1. Create Random Shortcat List\n"
+                "2. Traverse list\n"
+                "3. Traverse all element in list\n"
+                "4. Find element in list\n"
+                "0. Exit\n";
+        operation = getValidInput<int>("Your choice: ");
+
+        switch (operation)
+        {
+        case 1:
+            if (list != nullptr) {
+                delete list;
+                list = nullptr;
+            }
+            N = getValidInput<int>("Enter the number of elements: ");
+            p_add = getValidInput<double>("Enter the probability of creating a new link: ");
+            p_follow = getValidInput<double>("Enter the probability of following a link: ");
+            list = new RandomShortcutList(N, p_add, p_follow);
+            cout << "\n=== Random Shortcut List created! ===\n";
+            break;
+        case 2:
+            if (list == nullptr) {
+                cout << "Please create the Random Shortcut List first.\n";
+                break;
+            }
+            int index;
+            index = getValidInput<int>("Enter the starting index: ");
+            list->traverse(index, printList);
+            cout << endl;
+            break;
+        case 3:
+            if (list == nullptr) {
+                cout << "Please create the Random Shortcut List first.\n";
+                break;
+            }
+            int indexAll;
+            indexAll = getValidInput<int>("Enter the starting index: ");
+            list->traverseAllElement(indexAll, printList);
+            cout << endl;
+            break;
+        case 4:
+            if (list == nullptr) {
+                cout << "Please create the Random Shortcut List first.\n";
+                break;
+            }
+            int target;
+            target = getValidInput<int>("Enter the target value to search: ");
+            try {
+                int steps = list->search(target);
+                cout << "Steps to find " << target << ": " << steps << endl;
+            }
+            catch (const exception& e) {
+                cerr << e.what() << endl;
+            }
+            break;
+        case 0:
+            cout << "=== EXIT ===\n";
+            break;
+        default:
+            cout << "\n### Invalid operation. Please try again! ###\n";
+            break;
+        }
+    } while (operation != 0);
+
 }
 
 void demonstrationMode()
@@ -296,4 +397,23 @@ void benchmarkMode()
     cout << "Time to traverse the list: " << durationTraverse.count() << " milliseconds\n";
     cout << "Total working time: " << duration.count() / 1000.0 << " seconds\n";
     cout << "\n=== BENCHMARK MODE END ===";
+}
+
+template <typename T>
+T getValidInput(const string& prompt) {
+    T value;
+    bool cinFail;
+    do
+    {
+        cinFail = false;
+        cout << prompt;
+        cin >> value;
+        if (cin.fail()) {
+            cerr << "\n### Invalid input. Please enter a valid number. ###\n\n";
+            cin.clear();
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+            cinFail = true;
+        };
+    } while (cinFail);
+    return value;
 }
