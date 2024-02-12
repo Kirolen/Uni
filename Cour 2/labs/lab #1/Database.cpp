@@ -430,6 +430,7 @@ void benchmarkMode()
     for (int mode = 2; mode >= 0; mode--)
     {
         vector<Product> buffer;
+        buffer.reserve(num);
         string file = txt;
         bool isTxtDatabse = true;
         if (mode == 2)
