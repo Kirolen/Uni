@@ -9,7 +9,7 @@
 
 #define increasingValues true
 #define show true
-#define changeStep 25
+#define changeAlgorithmStep 25
 
 using namespace std;
 
@@ -19,24 +19,16 @@ struct Point
 
     Point(double x = 0, double y = 0, double z = 0) : x(x), y(y), z(z) {}
 
-    bool operator>(const Point& other) const
-    {
+    bool operator>(const Point& other) const {
         return x > other.x || (x == other.x && (y > other.y || (y == other.y && z > other.z)));
     }
-    bool operator<(const Point& other) const
-    {
+    bool operator<(const Point& other) const {
         return x < other.x || (x == other.x && (y < other.y || (y == other.y && z < other.z)));
     }
 
-    friend ostream& operator<<(ostream& os, const Point& p)
-    {
+    friend ostream& operator<<(ostream& os, const Point& p) {
         os << "(" << p.x << ", " << p.y << ", " << p.z << ")";
         return os;
-    }
-
-    double distanceFromZero() const
-    {
-        return sqrt(x * x + y * y + z * z);
     }
 };
 
@@ -67,8 +59,27 @@ void combinateSort(vector<T>& arr, int left, int right, int n, bool showStep);
 int main()
 {
     srand(time(NULL));
-    //demonstrationMode();
-    benchmarkMode();
+
+    cout << "Choose program mode:\n"
+        "1. Demonstration mode\n"
+        "2. Benchmark mode\n"
+        "3. Exit\n";
+    int operation;
+    do {
+        operation = getValidInput<int>("Choose mode: ");
+        switch (operation) {
+            case 0:
+                break;
+            case 1:
+                demonstrationMode();
+                break;
+            case 2:
+                benchmarkMode();
+                break;
+            default:
+                cout << "Enter a wrong number\n";
+        }
+    } while (operation < 0 || operation > 2);    
 }
 
 void demonstrationMode()
@@ -92,7 +103,7 @@ void demonstrationMode()
         if (mode == 0) insertionSort(temp, 0, size, !show);
         else if (mode == 1) quickSort(temp, 0, size - 1, !show);
         else if (mode == 2) mergeSort(temp);
-        else if (mode == 3) combinateSort(temp, 0, size - 1, changeStep, !show);
+        else if (mode == 3) combinateSort(temp, 0, size - 1, changeAlgorithmStep, !show);
         else if (mode == 4) sort(temp.begin(), temp.end());
         printArray(temp);
 
@@ -100,7 +111,7 @@ void demonstrationMode()
         if (mode == 0) insertionSort(increasingTemp, 0, size, !show);
         else if (mode == 1) quickSort(increasingTemp, 0, size - 1, !show);
         else if (mode == 2) mergeSort(increasingTemp);
-        else if (mode == 3) combinateSort(increasingTemp, 0, size - 1, changeStep, !show);
+        else if (mode == 3) combinateSort(increasingTemp, 0, size - 1, changeAlgorithmStep, !show);
         else if (mode == 4) sort(increasingTemp.begin(), increasingTemp.end());
         printArray(increasingTemp);
 
@@ -108,7 +119,7 @@ void demonstrationMode()
         if (mode == 0) insertionSort(decreasingTemp, 0, size, !show);
         else if (mode == 1) quickSort(decreasingTemp, 0, size - 1, !show);
         else if (mode == 2) mergeSort(decreasingTemp);
-        else if (mode == 3) combinateSort(decreasingTemp, 0, size - 1, changeStep, !show);
+        else if (mode == 3) combinateSort(decreasingTemp, 0, size - 1, changeAlgorithmStep, !show);
         else if (mode == 4) sort(decreasingTemp.begin(), decreasingTemp.end());
         printArray(decreasingTemp);
     }
@@ -134,32 +145,31 @@ void benchmarkMode()
 
         auto startTime = chrono::high_resolution_clock::now();
         auto startRandomTime = chrono::high_resolution_clock::now();
-        if (mode == 0)int k; //insertionSort(temp, 0, size, !show);
+        if (mode == 0) insertionSort(temp, 0, size, !show);
         else if (mode == 1) quickSort(temp, 0, size - 1, !show);
         else if (mode == 2) mergeSort(temp);
-        else if (mode == 3) combinateSort(temp, 0, size-1, changeStep, !show);
+        else if (mode == 3) combinateSort(temp, 0, size - 1, changeAlgorithmStep, !show);
         else if (mode == 4) sort(temp.begin(), temp.end());
         auto endRandomTime = chrono::high_resolution_clock::now();
-        //cout << "Is sorted: " << is_sorted(temp.begin(), temp.end()) << endl;
 
         auto startIncreasingTime = chrono::high_resolution_clock::now();
-        if (mode == 0)int k;// insertionSort(increasingTemp, 0, size, !show);
+        if (mode == 0) insertionSort(increasingTemp, 0, size, !show);
         else if (mode == 1) quickSort(increasingTemp, 0, size - 1, !show);
         else if (mode == 2) mergeSort(increasingTemp);
-        else if (mode == 3) combinateSort(increasingTemp, 0, size - 1, changeStep, !show);
+        else if (mode == 3) combinateSort(increasingTemp, 0, size - 1, changeAlgorithmStep, !show);
         else if (mode == 4) sort(increasingTemp.begin(), increasingTemp.end());
         auto endIncreasingTime = chrono::high_resolution_clock::now();
 
         auto startDeincreasingTime = chrono::high_resolution_clock::now();
-        if (mode == 0) int k;// insertionSort(decreasingTemp, 0, size, !show);
+        if (mode == 0) insertionSort(decreasingTemp, 0, size, !show);
         else if (mode == 1) quickSort(decreasingTemp, 0, size - 1, !show);
         else if (mode == 2) mergeSort(decreasingTemp);
-        else if (mode == 3) combinateSort(decreasingTemp, 0, size - 1, changeStep, !show);
+        else if (mode == 3) combinateSort(decreasingTemp, 0, size - 1, changeAlgorithmStep, !show);
         else if (mode == 4) sort(decreasingTemp.begin(), decreasingTemp.end());
         auto endDeincreasingTime = chrono::high_resolution_clock::now();
 
         auto endTime = chrono::high_resolution_clock::now();
-        
+
         auto duration = chrono::duration_cast<chrono::milliseconds>(endTime - startTime);
         auto durationRandom = chrono::duration_cast<chrono::milliseconds>(endRandomTime - startRandomTime);
         auto durationIncreasing = chrono::duration_cast<chrono::milliseconds>(endIncreasingTime - startIncreasingTime);
@@ -232,7 +242,7 @@ void printArray(const vector<T>& arr)
 }
 
 template <typename T>
-void insertionSort(vector<T>& arr, int left, int right,  bool showStep)
+void insertionSort(vector<T>& arr, int left, int right, bool showStep)
 {
     int size = right, j;
     if (size <= 1) return;
@@ -249,7 +259,7 @@ void insertionSort(vector<T>& arr, int left, int right,  bool showStep)
 
 template <typename T>
 int hoarePartition(vector<T>& arr, int left, int right, bool showStep) {
-    T pivot = arr[(left + right) / 2]; 
+    T pivot = arr[(left + right) / 2];
     while (true) {
         while (pivot > arr[left]) left++;
         while (arr[right] > pivot) right--;
@@ -263,7 +273,7 @@ int hoarePartition(vector<T>& arr, int left, int right, bool showStep) {
 }
 template <typename T>
 void quickSort(vector<T>& arr, int left, int right, bool showStep) {
-    if (left < right) 
+    if (left < right)
     {
         int partition_index = hoarePartition(arr, left, right, showStep);
         quickSort(arr, left, partition_index, showStep);
