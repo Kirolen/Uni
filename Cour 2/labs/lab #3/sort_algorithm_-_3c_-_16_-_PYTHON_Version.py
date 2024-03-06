@@ -1,11 +1,6 @@
 import random
 import time
 
-def swap(a, b):
-    t = a
-    a = b
-    b = a
-
 def insertion_sort(arr):
     size = len(arr)
     if size <= 1: return 
