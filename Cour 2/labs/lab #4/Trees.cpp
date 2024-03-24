@@ -14,8 +14,11 @@
 #include <stack>
 #include <string>
 #include <cmath>
+#include <chrono>
+#include <thread>
 
 #define M_Pi 3.141592
+#define M_e 2.7182818
 
 class N_ary_Tree
 {
@@ -455,7 +458,7 @@ public:
         tree_node* left;
         tree_node* right;
 
-        tree_node(const std::string& val, tree_node* left = nullptr, tree_node* right = nullptr) : value(val), left(left), right(right) {}
+        tree_node(const std::string& val = "", tree_node* left = nullptr, tree_node* right = nullptr) : value(val), left(left), right(right) {}
     };
 
     tree_node* root;
@@ -464,93 +467,49 @@ public:
 
     ~Expression_Tree() {}
 
-    void create_tree(std::string exp) {
-        std::string postfix = infix_to_postfix(exp);
-        std::stack<tree_node*> node_stack;
-        std::cout << postfix << std::endl;
-        for (int i = 0; i < postfix.length(); i++) {
-            char c = postfix[i];
-            std::string value;
-            while (c != ' ' && i < postfix.length()) {
-                value += c;
-                i++;
-                c = postfix[i];
-            }
-
-            if (!value.empty()) {
-                if (is_function(value)) {
-                    tree_node* node = new tree_node(value);
-                    if (value == "cos" || value == "sin" || value == "tg" || value == "ctg" || value == "ln") {
-                        node->right = node_stack.top(); node_stack.pop();
-                    }
-                    else if (value == "log") {
-                        node->right = node_stack.top(); node_stack.pop();
-                        node->left = node_stack.top(); node_stack.pop();
-                    }
-                    node_stack.push(node);
-                }
-                else if (is_operator(value[0])) {
-                    std::cout << value << std::endl;
-                    tree_node* node = new tree_node(value);
-                    node->right = node_stack.top(); node_stack.pop();
-                    node->left = node_stack.top(); node_stack.pop();
-                    node_stack.push(node);
-                }
-                else if (is_operand(value)) {
-                    std::cout << value << std::endl;
-                    node_stack.push(new tree_node(value));
-                }
-            }
-        }
-        root = node_stack.top();
+    void create_tree() {
+        std::cout << "< Allowed values: numbers, -munbers, e, Pi, +, -, *, /, ^, sin, cos, tg, ctg, ln, log >\n"
+            "<log(a, b) or a^b: a - is left value, b - is right value\n"
+            "Input start: ";
+        root = add_to_tree();
     }
 
-    void print_tree(tree_node* node = nullptr, int level = 0) const {
-        if (!node) node = root;
-        if (!node) {
-            std::cout << "Error: Tree is empty\n";
-            return;
-        }
-
-        if (node->right) print_tree(node->right, level + 1);
-
-        std::cout << std::string(level * 4, ' ') << node->value << "\n";
-
-        if (node->left) print_tree(node->left, level + 1);
+    void simplify() {
+        if (root) s1mple(root);
     }
 
     void differentiate(std::string var) {
+        if (!root) return;
         simplify();
         tree_node* diff_exp_tree = diff(root, var);
         clear(root);
         root = diff_exp_tree;
     }
 
-    void simplify() {
-        s1mple(root);
+    void count_sub_exp() {
+        if (root) counting(root);
     }
 
-    void count_sub_exp() {
-        counting(root);
+    std::pair<std::string, double> calculate(std::vector<std::pair<std::string, std::string>> vars) {
+        if (!root) return { "Tree is empty.", 0 };
+        tree_node* copy_for_calc = copytr(root);
+        change_var_to_num(copy_for_calc, vars);
+        std::string error = check_math_errors(copy_for_calc);
+        if (error != "No errors found.") {
+            return { error, 0};
+        }
+
+        counting(copy_for_calc);
+        double result = stod(copy_for_calc->value);
+        clear(copy_for_calc);
+        return {error, result};
     }
 
     std::string check_math_errors(tree_node* node) {
         if (!node)
             return "No errors found.";
 
-        if (!is_operator(node->value[0]) && !is_num(node->value) && !is_function(node->value)
-            && node->value != "x" && node->value != "y" && node->value != "z") {
-            return "Error: Incorrect variables";
-        }
-
-        if (is_operator(node->value[0]) || is_function(node->value)) {
-            if (is_operator(node->value[0]) || node->value == "log") {
-                if (!node->right || !node->left) return "Error: Not enough values";
-            }
-            else if (is_function(node->value) && node->value != "log") {
-                if (!node->right || node->left) return "Error: Not enough values. Functions must have only right node!";
-            }
-
+        if (is_operation(node->value) || is_function(node->value)) {
             if (node->value == "/") {
                 tree_node* check_result = copytr(node->right);
                 counting(check_result);
@@ -599,13 +558,12 @@ public:
                 std::string check_value_right = check_result_right->value;
                 clear(check_result_right);
 
-                if (stod(check_value_right) < 0) {
+                if (is_num(check_value_right) && stod(check_value_right) < 0) {
                     return "Error: Negative variables in ln.";
                 }
             }
 
         }
-
 
         std::string left_errors = check_math_errors(node->left);
         if (left_errors != "No errors found.")
@@ -618,89 +576,172 @@ public:
         return "No errors found.";
     }
 
-    double calculate(std::vector<std::pair<std::string, std::string>> vars) {
-        tree_node* copy_for_calc = copytr(root);
-        std::string error = check_math_errors(copy_for_calc);
-        if (error != "No errors found.") {
-            std::cout << "Tree expression have error!\n" << error << std::endl;
-            return 0;
+    void print_tree(tree_node* node, int level = 0) const {
+        if (!root) {
+            std::cout << "Error: Tree is empty\n";
+            return;
         }
-        change_var_to_num(copy_for_calc, vars);
-        counting(copy_for_calc);
-        double result = stod(copy_for_calc->value);
-        std::cout << result;
-        clear(copy_for_calc);
-        return result;
+
+        if (node->right) print_tree(node->right, level + 1);
+
+        std::cout << std::string(level * 4, ' ') << node->value << "\n";
+
+        if (node->left) print_tree(node->left, level + 1);
     }
 
+    void dem_mode() {
+        std::pair<std::string, double> res;
+        std::vector<std::pair<std::string, std::string>> var_val = { {"x", "0"}, {"y", "0"}, {"z", "0"} };
+        std::cout << "Let`s create expression tree and print it\n";
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+        /*              +
+                /               +
+            1       x       ln      z
+                                y
+
+        */
+        root = new tree_node("+");
+        root->left = new tree_node("/");
+        root->left->left = new tree_node("1");
+        root->left->right = new tree_node("x");
+        root->right = new tree_node("+");
+        root->right->left = new tree_node("ln");
+        root->right->left->right = new tree_node("y");
+        root->right->right = new tree_node("z");
+
+        print_tree(root);
+        std::cout << std::endl;
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+
+        std::cout << "Let`s check math errors in tree: " << check_math_errors(root) << std::endl;
+        std::cout << std::endl;
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+        
+        std::cout << "Let`s count for x = 0, y = e z = 2\n";
+        var_val = { {"x", "0"}, {"y", "e"}, {"z", "2"} };
+        res = calculate(var_val);
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+        if (res.first != "No errors found.")
+            std::cout << "Tree expression have error!" << std::endl << res.first << std::endl;
+        else
+            std::cout << "Result: " << res.second << std::endl;
+        std::cout << std::endl;
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+
+        std::cout << "Let`s count for x = 10, y = -e z = 2\n";
+        var_val = { {"x", "10"}, {"y", "-e"}, {"z", "2"} };
+        res = calculate(var_val);
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+        if (res.first != "No errors found.")
+            std::cout << "Tree expression have error!" << std::endl << res.first << std::endl;
+        else
+            std::cout << "Result: " << res.second << std::endl;
+        std::cout << std::endl;
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+
+        std::cout << "Let`s count for x = 1, y = e z = 2\n";
+        var_val = { {"x", "1"}, {"y", "e"}, {"z", "2"} };
+        res = calculate(var_val);
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+        if (res.first != "No errors found.")
+            std::cout << "Tree expression have error!" << std::endl << res.first << std::endl;
+        else
+            std::cout << "Result: " << res.second << std::endl;
+        std::cout << std::endl;
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+
+        std::cout << "Let`s differentiate for y and print differentiation tree\n";
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+        differentiate("y");
+        print_tree(root);
+        std::cout << std::endl;
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+
+        std::cout << "Let`s count subtree,simplify it and print\n";
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+        count_sub_exp();
+        simplify();
+        print_tree(root);
+        std::cout << std::endl;
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+
+        std::cout << "Let`s count for x = 10000, y = 12, z = 134\n";
+        var_val = { {"x", "10000"}, {"y", "12"}, {"z", "134"} };
+        res = calculate(var_val);
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+        if (res.first != "No errors found.")
+            std::cout << "Tree expression have error!" << std::endl << res.first << std::endl;
+        else
+            std::cout << "Result: " << res.second << std::endl;
+        std::cout << std::endl;
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+    }
 private:
-    std::string infix_to_postfix(std::string infix) {
-        std::string postfix;
-        std::stack<std::string> operator_stack;
-
-        for (int i = 0; i < infix.length(); i++) {
-            char c = infix[i];
-            if (c == ' ') {
-                continue;
-            }
-            else if (isdigit(c)) {
-                std::string num;
-                while (i < infix.length() && (isdigit(c) || c == '.')) {
-                    num += c;
-                    i++;
-                    c = infix[i];
-                }
-                postfix += num + " ";
-                i--;
-            }
-            else if (isalpha(c)) {
-                std::string func;
-                while (i < infix.length() && isalpha(c)) {
-                    func += c;
-                    i++;
-                    c = infix[i];
-                }
-                if (is_function(func)) {
-                    while (!operator_stack.empty() && precedence(operator_stack.top()) >= precedence(func)) {
-                        postfix += operator_stack.top() + " ";
-                        operator_stack.pop();
-                    }
-                    operator_stack.push(func);
-                }
-                else {
-                    postfix += func + " ";
-                }
-                i--;
-            }
-            else if (c == '(') {
-                operator_stack.push(std::string(1, c));
-            }
-            else if (c == ')') {
-                while (!operator_stack.empty() && operator_stack.top() != "(") {
-                    postfix += operator_stack.top() + " ";
-                    operator_stack.pop();
-                }
-                operator_stack.pop();
-            }
-            else if (is_operator(c)) {
-                while (!operator_stack.empty() && precedence(operator_stack.top()) >= precedence(std::string(1, c))) {
-                    postfix += operator_stack.top() + " ";
-                    operator_stack.pop();
-                }
-                operator_stack.push(std::string(1, c));
-            }
-
+    tree_node* add_to_tree() {
+        std::string value;
+        value = input_math_symbols();
+        tree_node* node = new tree_node(value);
+        if (is_operation(value) || value == "log") {
+            std::cout << "Input left allowed value (" << value << "): ";
+            node->left = add_to_tree();
+            std::cout << "Input right allowed value (" << value << "): ";
+            node->right = add_to_tree();
         }
-
-        while (!operator_stack.empty()) {
-            postfix += operator_stack.top() + " ";
-            operator_stack.pop();
+        else if (is_function(value) && value != "log") {
+            std::cout << "Input right allowed value (" << value << "): ";
+            node->right = add_to_tree();
         }
-
-        return postfix;
+        return node;
     }
 
-    tree_node* copy_for_diff(std::string op, tree_node* pl, tree_node* pr) {
+    bool is_operation(const std::string& p_op) {
+        if (p_op.length() != 1) return false;
+        return std::string("+-*/^").find(p_op) != std::string::npos;
+    }
+
+    bool is_function(const std::string& p_func) {
+        if (p_func.length() != 2 && p_func.length() != 3) return false;
+        return std::string("cossintgctglnlog").find(p_func) != std::string::npos;
+    }
+
+    bool is_num(const std::string& p_num) {
+        if (p_num.empty())
+            return false;
+
+        bool has_decimal_point = false;
+        bool has_minus_sign = false;
+
+        for (size_t i = 0; i < p_num.length(); ++i) {
+            char c = p_num[i];
+
+            if (!isdigit(c)) {
+                if (c == '.' && p_num.length() > 1) {
+                    if (has_decimal_point)
+                        return false;
+                    has_decimal_point = true;
+                }
+                else if (c == '-' && p_num.length() > 1) {
+                    if (i != 0 || has_minus_sign)
+                        return false;
+                    has_minus_sign = true;
+                }
+                else if (p_num == "Pi" || p_num == "e" || p_num == "-Pi" || p_num == "-e")
+                    return true;
+                else {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    bool is_variable(const std::string& p_var) {
+        if (p_var.length() != 1) return false;
+        return (p_var.find_first_not_of("xyz") == std::string::npos);
+    }
+
+    tree_node* copy_with_new_node(std::string op, tree_node* pl, tree_node* pr) {
         return new tree_node(op, pl, pr);
     }
 
@@ -709,94 +750,14 @@ private:
         else return nullptr;
     }
 
-    tree_node* diff(tree_node* node, const std::string& var) {
-        if (!node)
-            return nullptr;
+    std::string input_math_symbols() {
+        std::string math_symbols; bool correct_input = true;
+        do {
+            if (!correct_input) std::cout << "Wrong value. Input one more time: ";
+            std::cin >> math_symbols; correct_input = false;
+        } while (!is_function(math_symbols) && !is_num(math_symbols) && !is_operation(math_symbols) && !is_variable(math_symbols));
 
-        if (node->value == "+")
-            return copy_for_diff("+", diff(node->left, var), diff(node->right, var));
-        else if (node->value == "-")
-            return copy_for_diff("-", diff(node->left, var), diff(node->right, var));
-        else if (node->value == "*")
-            return copy_for_diff("+",
-                copy_for_diff("*", diff(node->left, var), copytr(node->right)),
-                copy_for_diff("*", copytr(node->left), diff(node->right, var)));
-        else if (node->value == "/")
-            return copy_for_diff("/",
-                copy_for_diff("-",
-                    copy_for_diff("*", diff(node->left, var), copytr(node->right)),
-                    copy_for_diff("*", copytr(node->left), diff(node->right, var))),
-                copy_for_diff("*", copytr(node->right), copytr(node->right)));
-        else if (node->value == "^") {
-            tree_node* a = node->left;
-            tree_node* b = node->right;
-
-            tree_node* da_dx = diff(a, var);
-            tree_node* db_dx = diff(b, var);
-
-            tree_node* term1 = copy_for_diff("*", copytr(b), copy_for_diff("*", copy_for_diff("^", copytr(a), copy_for_diff("-", copytr(b), new tree_node("1"))), da_dx));
-            tree_node* term2 = copy_for_diff("*", copy_for_diff("^", copytr(a), copytr(b)), copy_for_diff("*", copy_for_diff("ln", nullptr, copytr(a)), db_dx));
-            return copy_for_diff("+", term1, term2);
-        }
-        else if (node->value == "sin") {
-            tree_node* du_sinu = copy_for_diff("cos", nullptr, copytr(node->right));
-            return copy_for_diff("*", du_sinu, diff(node->right, var));
-        }
-        else if (node->value == "cos") {
-            tree_node* du_cosu = copy_for_diff("-", new tree_node("sin", nullptr, copytr(node->right)), nullptr);
-            return copy_for_diff("*", du_cosu, diff(node->right, var));
-        }
-        else if (node->value == "tg") {
-            tree_node* du_tgu = copy_for_diff("/", new tree_node("1"), copy_for_diff("^", copy_for_diff("cos", nullptr, copytr(node->right)), new tree_node("2")));
-            return copy_for_diff("*", du_tgu, diff(node->right, var));
-        }
-        else if (node->value == "ctg") {
-            tree_node* minus_one = copy_for_diff("-", new tree_node("1"), nullptr);
-            tree_node* du_ctgu = copy_for_diff("/", minus_one, copy_for_diff("^", copy_for_diff("sin", nullptr, copytr(node->right)), new tree_node("2")));
-            return copy_for_diff("*", du_ctgu, diff(node->right, var));
-        }
-        else if (node->value == "log") {
-            tree_node* du_logu = copy_for_diff("/", new tree_node("1"), copy_for_diff("*", node->right, copy_for_diff("ln", nullptr, node->left)));
-            return copy_for_diff("/", du_logu, new tree_node("1"));
-        }
-        else if (node->value == "ln") {
-            return copy_for_diff("/", new tree_node("1"), copytr(node->right));
-        }
-        else if (is_operand(node->value)) {
-            if (node->value == var) return new tree_node("1");
-            else return new tree_node("0");
-        }
-
-        return nullptr;
-    }
-
-    bool is_operator(char c) {
-        return std::string("+-*/^").find(c) != std::string::npos;
-    }
-
-    bool is_function(std::string c) {
-        return std::string("sin cos tg ctg log ln").find(c) != std::string::npos;
-    }
-
-    bool is_operand(std::string value) {
-        if (is_num(value) || (isalpha(value[0]) && value.length() == 1) || value == "Pi") return true;
-        return false;
-    }
-
-    bool is_num(std::string value) {
-        if (value == "Pi") return true;
-        for (char c : value) {
-            if (!isdigit(c) && c != '.' && c != '-') return false;
-        }
-        return true;
-    }
-
-    int precedence(const std::string& op) {
-        if (op == "+" || op == "-") return 1;
-        if (op == "*" || op == "/") return 2;
-        if (op == "^") return 3;
-        if (is_function(op)) return 4;
-        return 0;
+        return math_symbols;
     }
 
     void s1mple(tree_node*& node) {
@@ -815,30 +776,16 @@ private:
                 node = node->left;
             }
         }
-        else if (node->value == "-" && node->right) {
-            if (node->right->value == "0") {
+        else if (node->value == "-" && node->right && node->right) {
+            if (node->right->value == "0" && is_num(node->left->value)) {
                 node = node->left;
             }
-            else if (node->right) {
-                if (node->right->value == "-" && !node->right->left) {
-                    node = copy_for_diff("+", node->left, node->right->right);
-                }
-                else if (node->right->value == "-" && !node->right->right) {
-                    node = copy_for_diff("+", node->left, node->right->left);
-                }
-            }
-        }
-        else if (node->value == "-" && node->left) {
-            if (node->left->value == "0") {
+            else if (node->left->value == "0" && is_num(node->right->value)) {
                 node = node->right;
-            }
-            else if (node->left->value == "-" && !node->left->right) {
-                node = copy_for_diff("+", node->right, node->left->left);
-            }
-            else if (node->left->value == "-" && !node->left->left) {
-                node = copy_for_diff("+", node->right, node->left->right);
+                node->value = std::to_string(std::stod(node->value) * -1);
             }
         }
+
         else if (node->value == "*") {
             if (node->left && node->right) {
                 if (node->left->value == "0" || node->right->value == "0") {
@@ -872,9 +819,75 @@ private:
             }
         }
 
-        if (node->left && node->right && node->left->value == "0" && node->right->value == "0") {
+        if (node->left && node->right && node->left->value == "0" && node->right->value == "0" && node->value != "/") {
             node = new tree_node("0");
         }
+    }
+
+    tree_node* diff(tree_node* node, const std::string& var) {
+        if (!node)
+            return nullptr;
+
+        if (node->value == "+")
+            return copy_with_new_node("+", diff(node->left, var), diff(node->right, var));
+        else if (node->value == "-")
+            return copy_with_new_node("-", diff(node->left, var), diff(node->right, var));
+        else if (node->value == "*")
+            return copy_with_new_node("+",
+                copy_with_new_node("*", diff(node->left, var), copytr(node->right)),
+                copy_with_new_node("*", copytr(node->left), diff(node->right, var)));
+        else if (node->value == "/")
+            return copy_with_new_node("/",
+                copy_with_new_node("-",
+                    copy_with_new_node("*", diff(node->left, var), copytr(node->right)),
+                    copy_with_new_node("*", copytr(node->left), diff(node->right, var))),
+                copy_with_new_node("*", copytr(node->right), copytr(node->right)));
+        else if (node->value == "^") {
+            tree_node* a = node->left;
+            tree_node* b = node->right;
+
+            tree_node* da_dx = diff(a, var);
+            tree_node* db_dx = diff(b, var);
+
+            tree_node* term1 = copy_with_new_node("*", copytr(b), copy_with_new_node("*", copy_with_new_node("^", copytr(a), copy_with_new_node("-", copytr(b), new tree_node("1"))), da_dx));
+            tree_node* term2 = copy_with_new_node("*", copy_with_new_node("^", copytr(a), copytr(b)), copy_with_new_node("*", copy_with_new_node("ln", nullptr, copytr(a)), db_dx));
+            return copy_with_new_node("+", term1, term2);
+        }
+        else if (node->value == "sin") {
+            tree_node* du_sinu = copy_with_new_node("cos", nullptr, copytr(node->right));
+            return copy_with_new_node("*", du_sinu, diff(node->right, var));
+        }
+        else if (node->value == "cos") {
+            tree_node* du_cosu = copy_with_new_node("-", new tree_node("sin", nullptr, copytr(node->right)), new tree_node("0"));
+            return copy_with_new_node("*", du_cosu, diff(node->right, var));
+        }
+        else if (node->value == "tg") {
+            tree_node* du_tgu = copy_with_new_node("/", new tree_node("1"), copy_with_new_node("^", copy_with_new_node("cos", nullptr, copytr(node->right)), new tree_node("2")));
+            return copy_with_new_node("*", du_tgu, diff(node->right, var));
+        }
+        else if (node->value == "ctg") {
+            tree_node* minus_one = copy_with_new_node("-", new tree_node("0"), new tree_node("1"));
+            tree_node* du_ctgu = copy_with_new_node("/", minus_one, copy_with_new_node("^", copy_with_new_node("sin", nullptr, copytr(node->right)), new tree_node("2")));
+            return copy_with_new_node("*", du_ctgu, diff(node->right, var));
+        }
+        else if (node->value == "log") {
+            tree_node* base = new tree_node("ln", nullptr, node->left);
+            tree_node* argument = new tree_node("ln", nullptr, node->right);
+            tree_node* diff_log = diff(copy_with_new_node("/", argument, base), var);
+
+            return diff_log;
+        }
+        else if (node->value == "ln") {
+            return copy_with_new_node("*", copy_with_new_node("/", new tree_node("1"), copytr(node->right)), diff(node->right, var));
+        }
+        else if (node->value == var) {
+            return new tree_node("1");
+        }
+        else if (is_num(node->value) || (is_variable(var) && node->value != var)) {
+            return new tree_node("0");
+        }
+
+        return nullptr;
     }
 
     void counting(tree_node*& node) {
@@ -883,12 +896,18 @@ private:
         }
 
         counting(node->left); counting(node->right);
-        double result = 0, left_value, right_value;
+        double result = 0, left_value = 0, right_value = 0;
         bool calc = false;
 
         if (node->left && node->right && is_num(node->left->value) && is_num(node->right->value)) {
-            node->left->value == "Pi" ? left_value = M_Pi : left_value = stod(node->left->value);
-            node->right->value == "Pi" ? right_value = M_Pi : right_value = stod(node->right->value);
+            node->left->value == "Pi" ? left_value = M_Pi :
+                (node->left->value == "e") ? left_value = M_e :
+                (node->left->value == "-e") ? left_value = -1 * M_e :
+                (node->left->value == "-Pi") ? left_value = -1 * M_Pi : left_value = stod(node->left->value);
+            node->right->value == "Pi" ? right_value = M_Pi :
+                (node->right->value == "e") ? right_value = M_e :
+                (node->right->value == "-e") ? right_value = -1 * M_e :
+                node->right->value == "-Pi" ? right_value = -1 * M_Pi : right_value = stod(node->right->value);
 
             if (node->value == "+") {
                 result = left_value + right_value;
@@ -908,12 +927,18 @@ private:
                 }
             }
             else if (node->value == "^") {
-                if (right_value >= 0) {
+                std::cout << "r: " << right_value << std::endl;
+                if (right_value >= 0.0) {
                     result = std::pow(left_value, right_value);
+                }
+                if (right_value < 0.0) {
+                    result = 1 / std::pow(left_value, -1 * right_value);
                 }
                 else {
                     result = std::numeric_limits<double>::quiet_NaN();
+                    std::cout << "==";
                 }
+                std::cout << "result: " << result << std::endl;
             }
             else if (node->value == "log") {
 
@@ -922,8 +947,10 @@ private:
             calc = true;
         }
         else if (node->right && is_num(node->right->value) && is_function(node->value)) {
-            node->right->value == "Pi" ? right_value = M_Pi : right_value = stod(node->right->value);
-
+            node->right->value == "Pi" ? right_value = M_Pi :
+                (node->right->value == "e") ? right_value = M_e :
+                (node->right->value == "-e") ? right_value = -1 * M_e :
+                node->right->value == "-Pi" ? right_value = -1 * M_Pi : right_value = stod(node->right->value);
             if (node->value == "ln") {
                 result = std::log(right_value);
             }
@@ -941,6 +968,13 @@ private:
             }
             calc = true;
         }
+        else if (is_num(node->value)) {
+            node->value == "Pi" ? result = M_Pi :
+                (node->value == "e") ? result = M_e :
+                (node->value == "-e") ? result = -1 * M_e :
+                (node->value == "-Pi") ? result = -1 * M_Pi : result = stod(node->value);
+            calc = true;
+        }
         if (calc) {
             result = round(result * 10000) / 10000.0;
 
@@ -956,21 +990,12 @@ private:
         }
     }
 
-    void clear(tree_node* node) {
-        if (node) {
-            clear(node->left);
-            clear(node->right);
-            delete node;
-            node = nullptr;
-        }
-    }
-
     void change_var_to_num(tree_node*& node, std::vector<std::pair<std::string, std::string>> vars) {
         if (!node) {
             return;
         }
 
-        if (!is_operator(node->value[0]) && !is_function(node->value) && !is_num(node->value)) {
+        if (is_variable(node->value)) {
             for (const auto& var : vars) {
                 if (var.first == node->value) {
                     node->value = var.second;
@@ -982,6 +1007,15 @@ private:
         change_var_to_num(node->left, vars);
         change_var_to_num(node->right, vars);
     }
+
+    void clear(tree_node* node) {
+        if (node) {
+            clear(node->left);
+            clear(node->right);
+            delete node;
+            node = nullptr;
+        }
+    }
 };
 
 template <typename T>
@@ -992,15 +1026,36 @@ void interactive_mode();
 int main()
 {
     srand(time(NULL));
-    //demonstration_mode();
-    interactive_mode();
+    int mode;
+    do {
+        std::cout << "Modes: \n"
+            "1. Interactive mode\n"
+            "2. Demonstartion mode\n"
+            "0. Exit\n";
+        mode = getValidInput<int>("Choose mode: ");
+        system("cls");
+        switch (mode) {
+        case 0:
+            break;
+        case 1:
+            interactive_mode();
+            break;
+        case 2:
+            demonstration_mode();
+            break;
+        default:
+            std::cout << "Wrong mode.\n";
+        }
+    } while (mode != 0);
+
     return 0;
 }
 
 void demonstration_mode()
 {
     std::cout << "=== Demonstration mode ===\n";
-    std::cout << "Create Tree like\n"
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+    std::cout << "Create Tree like:\n"
         "0\n"
         "+--- 1\n"
         "     +--- 4\n"
@@ -1013,6 +1068,7 @@ void demonstration_mode()
         "     +--- 8\n";
 
     std::cout << std::endl << std::endl;
+    std::this_thread::sleep_for(std::chrono::seconds(1));
 
     N_ary_Tree tree;
     tree.add(0);
@@ -1027,20 +1083,27 @@ void demonstration_mode()
     tree.add(9, { 2, 1 });
 
     std::cout << "Let`s print our Tree:\n";
+    std::this_thread::sleep_for(std::chrono::seconds(1));
     tree.print_tree();
     std::cout << std::endl;
+    std::this_thread::sleep_for(std::chrono::seconds(1));
 
     std::cout << "Let`s delete subtree which have path {}\n";
     N_ary_Tree deleted_subtree = tree.del_by_path({});
     std::cout << std::endl;
+    std::this_thread::sleep_for(std::chrono::seconds(1));
 
     std::cout << "Update tree:\n";
+    std::this_thread::sleep_for(std::chrono::seconds(1));
     tree.print_tree();
     std::cout << std::endl;
+    std::this_thread::sleep_for(std::chrono::seconds(1));
 
     std::cout << "Deleted subtree:\n";
+    std::this_thread::sleep_for(std::chrono::seconds(1));
     deleted_subtree.print_tree();
     std::cout << std::endl;
+    std::this_thread::sleep_for(std::chrono::seconds(1));
 
     std::cout << "Add some elements for start tree:\n";
     tree.add(0);
@@ -1051,9 +1114,12 @@ void demonstration_mode()
     tree.add(5, { 0 });
     tree.add(1);
     std::cout << std::endl;
+    std::this_thread::sleep_for(std::chrono::seconds(1));
 
     std::cout << "Print new start tree:\n";
+    std::this_thread::sleep_for(std::chrono::seconds(1));
     tree.print_tree();
+    std::this_thread::sleep_for(std::chrono::seconds(1));
     std::cout << std::endl;
 
     std::cout << "Let`s use add_proc:\n"
@@ -1061,8 +1127,8 @@ void demonstration_mode()
         "2) 20 with start chance 20%\n"
         "3) 30 with start chance 30%\n"
         "4) 40 with start chance 40%\n"
-        "1) 50 with start chance 50%\n"
-        "2) 60 with start chance 60%\n";
+        "5) 50 with start chance 50%\n"
+        "6) 60 with start chance 60%\n";
     tree.add_proc(10, 0.1);
     tree.add_proc(20, 0.2);
     tree.add_proc(30, 0.3);
@@ -1070,38 +1136,53 @@ void demonstration_mode()
     tree.add_proc(50, 0.5);
     tree.add_proc(60, 0.6);
     std::cout << std::endl;
+    std::this_thread::sleep_for(std::chrono::seconds(5));
 
     std::cout << "Print new start tree with add_proc elements:\n";
+    std::this_thread::sleep_for(std::chrono::seconds(1));
     tree.print_tree();
     std::cout << std::endl;
+    std::this_thread::sleep_for(std::chrono::seconds(1));
     
     std::cout << "Let`s delete subtree which have path {1}\n";
     deleted_subtree = tree.del_by_path({ 1 });
     std::cout << std::endl;
+    std::this_thread::sleep_for(std::chrono::seconds(1));
 
     std::cout << "Update tree:\n";
+    std::this_thread::sleep_for(std::chrono::seconds(1));
     tree.print_tree();
     std::cout << std::endl;
+    std::this_thread::sleep_for(std::chrono::seconds(1));
 
     std::cout << "Deleted subtree:\n";
+    std::this_thread::sleep_for(std::chrono::seconds(1));
     deleted_subtree.print_tree();
     std::cout << std::endl;
+    std::this_thread::sleep_for(std::chrono::seconds(1));
 
     std::cout << "Let`s delete subtrees which start with 1\n";
     tree.del_by_value(1);
     std::cout << std::endl;
+    std::this_thread::sleep_for(std::chrono::seconds(1));
 
     std::cout << "Update tree:\n";
+    std::this_thread::sleep_for(std::chrono::seconds(1));
     tree.print_tree();
     std::cout << std::endl;
+    std::this_thread::sleep_for(std::chrono::seconds(1));
 
     std::cout << "Let`s print with path every element:\n";
+    std::this_thread::sleep_for(std::chrono::seconds(1));
     tree.print_tree_with_path();
     std::cout << std::endl;
+    std::this_thread::sleep_for(std::chrono::seconds(1));
 
     std::cout << "Let`s open interactive view n-ary tree:\n";
+    std::this_thread::sleep_for(std::chrono::seconds(1));
     tree.interactive_tree_view();
     std::cout << std::endl;
+    std::this_thread::sleep_for(std::chrono::seconds(1));
 
     std::cout << "Let`s create binary tree\n";
     Bin_Tree bin;
@@ -1116,12 +1197,13 @@ void demonstration_mode()
     bin.add(50);
     bin.add(0);
     std::cout << std::endl;
-    
+    std::this_thread::sleep_for(std::chrono::seconds(1));
 
     std::cout << "Let`s print binary tree\n";
+    std::this_thread::sleep_for(std::chrono::seconds(1));
     bin.print_tree();
     std::cout << std::endl;
-
+    std::this_thread::sleep_for(std::chrono::seconds(1));
 
     std::cout << "Let`s create new N-ary tree and converted it to binary\n";
     N_ary_Tree tree_for_converted;
@@ -1134,23 +1216,35 @@ void demonstration_mode()
     tree_for_converted.add(6, { 2 });
     tree_for_converted.add(7, { 2 });
     std::cout << std::endl;
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+
     std::cout << "Let`s print new N-ary tree\n";
+    std::this_thread::sleep_for(std::chrono::seconds(1));
     tree_for_converted.print_tree();
     std::cout << std::endl;
-    
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+
     Bin_Tree converted_bin_tree;
     converted_bin_tree.convert_N_ary_To_Binary(tree_for_converted.root, converted_bin_tree.root);
 
     std::cout << "Let`s print converted binary tree\n";
+    std::this_thread::sleep_for(std::chrono::seconds(1));
     converted_bin_tree.print_tree();
     std::cout << std::endl;
+    std::this_thread::sleep_for(std::chrono::seconds(1));
 
     std::cout << "Let`s do threaded binary tree with converted binary tree\n";
     Threaded_Bin_Tree t;
     t.buildh(converted_bin_tree.root);
+    std::this_thread::sleep_for(std::chrono::seconds(1));
 
     std::cout << "Let`s do symmetric threaded binary tree traversal\n";
     t.symn(t.root);
+    std::cout << std::endl << std::endl;
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+
+    Expression_Tree exp;
+    exp.dem_mode();
 }
 void interactive_mode() {
     N_ary_Tree n_ary;
@@ -1158,8 +1252,11 @@ void interactive_mode() {
     Bin_Tree bin;
     Threaded_Bin_Tree thread;
     Expression_Tree expression;
+    std::string exp, var;
     std::vector<int> path;
     int val;
+    std::pair<std::string, double> res;
+    std::vector<std::pair<std::string, std::string>> var_val = { {"x", "0"}, {"y", "0"}, {"z", "0"}};
  
 
     int tree_num;
@@ -1209,6 +1306,7 @@ void interactive_mode() {
                     del = n_ary.del_by_path(path);
                     std::cout << "Deleted subtree: \n";
                     del.print_tree();
+                    std::cout << std::endl;
                     system("pause");
                     break;
                 case 4:
@@ -1217,14 +1315,16 @@ void interactive_mode() {
                     break;
                 case 5:
                     input_path(path);
-                    std::cout << n_ary.el_by_path(path)->value;
                     system("pause");
+                    break;
                 case 6:
                     n_ary.print_tree();
+                    std::cout << std::endl;
                     system("pause");
                     break;
                 case 7:
                     n_ary.print_tree_with_path();
+                    std::cout << std::endl;
                     system("pause");
                     break;
                 case 8:
@@ -1240,14 +1340,13 @@ void interactive_mode() {
         case 2:
             do {
                 system("cls");
-                std::cout << "Operattion for n-ary tree:\n"
+                std::cout << "Operattion for binary tree:\n"
                     "1. Add value \n"
                     "2. Convert n-ary tree to binary\n"
                     "3. Print tree by levels\n"
                     "4. Print tree\n"
                     "5. Build thread binary tree\n"
                     "6. Print symetric thread binary tree\n"
-                    "7. Print tree with path\n"
                     "0. Exit\n";
                 mode = getValidInput<int>("Choose opeartion: ");
                 system("cls");
@@ -1290,6 +1389,66 @@ void interactive_mode() {
 
             } while (mode != 0);
             break;
+        case 3:
+            do {
+                system("cls");
+                std::cout << "Operattion for expression tree:\n"
+                    "1. Create tree\n"
+                    "2. Check errors in tree\n"
+                    "3. Differentiation tree\n"
+                    "4. Count sub-tree\n"
+                    "5. Simplify tree\n"
+                    "6. Calculate tree\n"
+                    "7. Print tree\n"
+                    "0. Exit\n";
+                mode = getValidInput<int>("Choose opeartion: ");
+                system("cls");
+                switch (mode)
+                {
+                case 0:
+                    break;
+                case 1:
+                    expression.create_tree();
+                    break;
+                case 2:
+                    std::cout << expression.check_math_errors(expression.root) << std::endl;
+                    system("pause");
+                    break;
+                case 3:
+                    var = getValidInput<std::string>("Input var for differentiate: ");
+                    if (var.length() != 1) break;
+                    expression.differentiate(var);
+                    break;
+                case 4:
+                    expression.count_sub_exp();
+                    break;
+                case 5:
+                    expression.simplify();
+                    break;
+                case 6:
+                    for (int i = 0; i < var_val.size(); i++) {
+                        std::cout << "Input value for " << var_val[i].first << ": ";
+                        double val; val = getValidInput<double>("");
+                        var_val[i].second = std::to_string(val);
+                    }
+                    res = expression.calculate(var_val);
+                    if (res.first != "No errors found.")
+                        std::cout << "Tree expression have error!" << std::endl << res.first << std::endl;
+                    else
+                        std::cout << "Result: " << res.second << std::endl;
+                    system("pause");
+                    break;
+                case 7:
+                    expression.print_tree(expression.root);
+                    system("pause");
+                default:
+                    std::cout << "Wrong operation.\n";
+                    break;
+                }
+
+
+            } while (mode != 0);
+            break;
         } 
 
     } while (tree_num != 0);
@@ -1304,11 +1463,20 @@ T getValidInput(const std::string& prompt) {
         std::cout << prompt;
         std::cin >> value;
         if (std::cin.fail()) {
-            std::cerr << "\n### Invalid input. Please enter a valid number. ###\n\n";
+            std::cerr << "\n### Invalid input. Please enter a valid value. ###\n\n";
             std::cin.clear();
             std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
             cinFail = true;
-        };
+        }
+        else {
+            char extra;
+            if (std::cin.get(extra) && extra != '\n') {
+                std::cerr << "\n### Invalid input. Extra characters detected. ###\n\n";
+                std::cin.clear();
+                std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+                cinFail = true;
+            }
+        }
     } while (cinFail);
     return value;
 }
