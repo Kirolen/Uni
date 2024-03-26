@@ -46,7 +46,7 @@ void demonstartion_mode()
 
     std::cout << "Merge sorted array: \n";
     temp = random_arr;
-    merge_sort(temp);
+    quick_sort(temp, 0, temp.size() - 1);
     print_arr(temp);
 }
 
