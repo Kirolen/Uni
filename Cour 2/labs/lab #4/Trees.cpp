@@ -931,7 +931,7 @@ private:
                 if (right_value >= 0.0) {
                     result = std::pow(left_value, right_value);
                 }
-                if (right_value < 0.0) {
+                else if (right_value < 0.0) {
                     result = 1 / std::pow(left_value, -1 * right_value);
                 }
                 else {
