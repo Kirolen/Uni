@@ -1,13 +1,12 @@
 /*
-Блок 0: 1, 2
-Блок 1: 5, 6, 7
+Блок 0: (1, 2
+Блок 1: 5, 6), 7
 Блок 2: 11 
 Блок 3: 14, 15
 Блок 4: 18
 Блок 5: 19
 Блок 6: 21
 */
-
 
 #include <iostream>
 #include <list>
@@ -20,8 +19,15 @@
 #include <iomanip>
 #include <chrono>
 #include <thread>
+#include <C:\Users\Lenovo\Desktop\Uni\2 Cour\Programing\Labs\Lab #5\Graphs\Graphs\benchmark.h>
 
-#define INF std::numeric_limits<int>::max()
+#define INF 1e9
+#define bm_ver 100
+#define bm_ed 400
+#define bm_mw 100
+#define bm true
+
+
 struct edge {
     int is, to;
     double dis;
@@ -40,6 +46,23 @@ public:
 
     ~adj_list_graph() {
         delete[] adj_list;
+    }
+
+    adj_list_graph& operator=(const adj_list_graph& other) {
+        if (this == &other) 
+            return *this;
+
+        num_vertex = other.num_vertex;
+        directed = other.directed;
+
+        delete[] adj_list;
+
+        adj_list = new std::list<std::pair<int, double>>[num_vertex];
+        for (int i = 0; i < num_vertex; ++i) {
+            adj_list[i] = other.adj_list[i];
+        }
+
+        return *this;
     }
 
     //Додавання ребра
@@ -117,7 +140,7 @@ public:
     }
 
     //Пошук компонент зв'язності
-    void find_connected_components() {
+    void find_connected_components(bool benchmark = false) {
         if (directed) {
             std::cout << "Is directed graph.\n";
             return;
@@ -132,13 +155,14 @@ public:
                 components.push_back(component);
             }
         }
-
-        for (size_t i = 0; i < components.size(); ++i) {
-            std::cout << i + 1 << " component: ";
-            for (size_t j = 0; j < components[i].size(); ++j) {
-                std::cout << components[i][j] << (j == components[i].size() - 1 ? "" : ", ");
+        if (!benchmark) {
+            for (size_t i = 0; i < components.size(); ++i) {
+                std::cout << i + 1 << " component: ";
+                for (size_t j = 0; j < components[i].size(); ++j) {
+                    std::cout << components[i][j] << (j == components[i].size() - 1 ? "" : ", ");
+                }
+                std::cout << std::endl;
             }
-            std::cout << std::endl;
         }
     }
 
@@ -160,27 +184,27 @@ public:
     }
 
     //Пошук в глибину 
-    void DFS(int start_vertex = 0) {
+    void DFS(int start_vertex = 0, bool benchmark = false) {
         std::vector<bool> visited(num_vertex, false);
-        DFS_util(start_vertex, visited);
+        DFS_util(start_vertex, visited, benchmark);
         for (int i = 0; i < num_vertex; ++i) {
-            if (!visited[i]) DFS_util(i, visited);
+            if (!visited[i]) DFS_util(i, visited, benchmark);
         }
     }
 
     //Пошук в глибину за найменшою вагою ребра
-    void dfs_min_weight() {
+    void dfs_min_weight(bool benchmark = false) {
         std::vector<bool> visited(num_vertex, false);
         for (int i = 0; i < num_vertex; i++) {
             if (!visited[i]) {
-                dfs_min_weight_helper(visited, i, -1, INF);
+                dfs_min_weight_helper(visited, i, -1, INF, benchmark);
             }
         }
-        std::cout << std::endl;
+        if (!benchmark) std::cout << std::endl;
     }
 
     //Алгорит Дейкстри для пошуку найменшої відстані між однією вершиною з усіма іншими
-    void dijkstra(int source) {
+    void dijkstra(int source, bool benchmark = false) {
         std::vector<double> dist(num_vertex, INF);
         std::queue<int> Q;
 
@@ -202,16 +226,19 @@ public:
             }
         }
 
-        std::cout << "Vertex \t Distance from Source\n";
-        for (int i = 0; i < num_vertex; ++i) {
-            std::cout << i << " \t ";
-            (dist[i] != INF ? std::cout << dist[i] : std::cout << "Path don`t exist");
-            std::cout << std::endl;
+        if (!benchmark) {
+            std::cout << "Vertex \t Distance from Source\n";
+            for (int i = 0; i < num_vertex; ++i) {
+                std::cout << i << " \t ";
+                (dist[i] != INF ? std::cout << dist[i] : std::cout << "Path don`t exist");
+                std::cout << std::endl;
+            }
         }
+
     }
 
     //Топологічне сортування
-    void topological_sort() {
+    void topological_sort(bool benchmark = false) {
         if (!directed) {
             std::cout << "Is undirected graph.\n";
             return;
@@ -226,31 +253,32 @@ public:
             }
         }
 
-        while (!Stack.empty()) {
+        while (!Stack.empty() && !benchmark) {
             std::cout << Stack.top() << " ";
             Stack.pop();
         }
     }
 
     //Алгоритм побудови кістякового дерева за допомогою пошука в глибину
-    adj_list_graph build_spanning_forest() {
+    void build_spanning_forest(adj_list_graph& forest) {
+        forest.num_vertex = num_vertex;
+        forest.adj_list = new std::list<std::pair<int, double>>[num_vertex];
+        forest.directed = !directed;
         if (!is_connected()) {
-            std::cout << "Graph isn`t connected.\n";
+            std::cout << "Graph isn't connected.\n";
             return;
         }
 
         std::vector<bool> visited(num_vertex, false);
-        adj_list_graph forest(num_vertex, !directed);
         for (int i = 0; i < num_vertex; ++i) {
             if (!visited[i]) {
                 build_spanning_forest_dfs(i, visited, forest);
             }
         }
-        return forest;
     }
 
     //Алгоритм Крускала для побудови кістякового дерева найменшої ваги
-    void kruskal() {
+    void kruskal(bool benchmark = false) {
         if (!is_connected()) {
             std::cout << "Graph isn`t connected.\n";
             return;
@@ -268,13 +296,15 @@ public:
             int rootX = find(parent, edge.is);
             int rootY = find(parent, edge.to);
             if (rootX != rootY) { // If including this edge doesn't form a cycle
-                std::cout << edge.is << "->" << edge.to << " (" << edge.dis << ")\n";
+                if (!benchmark) std::cout << edge.is << "->" << edge.to << " (" << edge.dis << ")\n";
                 min_weight += edge.dis;
                 union_sets(parent, edge.is, edge.to);
             }
         }
-        std::cout << "Total weight of MST: " << min_weight << std::endl;
+        if (!benchmark) std::cout << "Total weight of MST: " << min_weight << std::endl;
     }
+
+
 private:
     //Допоміжна функція перевірки існування ребра (додавання та видалення ребра)
     bool edge_exists(int u, int v) {
@@ -290,18 +320,18 @@ private:
     }
 
     //Допоміжна функція для проходу графа в глибину за вагою ребра
-    void dfs_min_weight_helper(std::vector<bool>& visited, int v, int prev_vertex, double prev_weight) {
+    void dfs_min_weight_helper(std::vector<bool>& visited, int v, int prev_vertex, double prev_weight, bool benchmark) {
         visited[v] = true;
-        std::cout << v << " ";
+        if (!benchmark)std::cout << v << " ";
 
         std::vector<std::pair<int, double>> sorted_neighbors(adj_list[v].begin(), adj_list[v].end());
         std::sort(sorted_neighbors.begin(), sorted_neighbors.end(), [](const std::pair<int, double>& a, const std::pair<int, double>& b) {
-            return a.second < b.second; // Sort based on edge weight
+            return a.second < b.second; 
             });
 
         for (const auto& neighbor : sorted_neighbors) {
             if (!visited[neighbor.first]) {
-                dfs_min_weight_helper(visited, neighbor.first, v, neighbor.second);
+                dfs_min_weight_helper(visited, neighbor.first, v, neighbor.second, benchmark);
             }
         }
     }
@@ -408,14 +438,14 @@ private:
         parent[rootX] = rootY;
     }
 
-    void DFS_util(int v, std::vector<bool>& visited) {
+    void DFS_util(int v, std::vector<bool>& visited, bool benchmark) {
         visited[v] = true;
-        std::cout << v << " ";
+        if (!benchmark) std::cout << v << " ";
 
         for (auto& neighbor : adj_list[v]) {
             int adj_vertex = neighbor.first;
             if (!visited[adj_vertex]) {
-                DFS_util(adj_vertex, visited);
+                DFS_util(adj_vertex, visited, benchmark);
             }
         }
     }
@@ -432,6 +462,17 @@ public:
         for (int i = 0; i < num_vertex; i++) {
             adj_matrix[i].resize(num_vertex, 0);
         }
+    }
+
+    adj_matrix_graph& operator=(const adj_matrix_graph& other) {
+        if (this == &other) 
+            return *this;
+
+        num_vertex = other.num_vertex;
+        directed = other.directed;
+        adj_matrix = other.adj_matrix; 
+
+        return *this;
     }
 
     //Додавання ребра до графу
@@ -506,11 +547,11 @@ public:
     }
 
     //Пошук усіх компонент зв'язності
-    void find_connected_components() {
+    void find_connected_components(bool benchmark = false) {
         if (directed) {
             std::cout << "Is directed graph." << std::endl;
+            return;
         }
-
         std::vector<std::vector<int>> components;
         std::vector<bool> visited(num_vertex, false);
         for (int i = 0; i < num_vertex; ++i) {
@@ -521,12 +562,14 @@ public:
             }
         }
 
-        for (size_t i = 0; i < components.size(); ++i) {
-            std::cout << i + 1 << " component: ";
-            for (size_t j = 0; j < components[i].size(); ++j) {
-                std::cout << components[i][j] << (j == components[i].size() - 1 ? "" : ", ");
+        if (!benchmark) {
+            for (size_t i = 0; i < components.size(); ++i) {
+                std::cout << i + 1 << " component: ";
+                for (size_t j = 0; j < components[i].size(); ++j) {
+                    std::cout << components[i][j] << (j == components[i].size() - 1 ? "" : ", ");
+                }
+                std::cout << std::endl;
             }
-            std::cout << std::endl;
         }
     }
 
@@ -548,27 +591,27 @@ public:
     }
     
     //Пошук в глибину 
-    void DFS(int vertex = 0) {
+    void DFS(int vertex = 0, bool benchmark = false) {
         std::vector<bool> visited(num_vertex, false);
-        DFS_util(vertex, visited);
+        DFS_util(vertex, visited, benchmark);
         for (int i = 0; i < num_vertex; ++i) {
-            if (!visited[i]) DFS_util(i, visited);
+            if (!visited[i]) DFS_util(i, visited, benchmark);
         }
     }
 
     //Прохід графа в глибину за найменшою вагою ребра
-    void dfs_min_weight() {
+    void dfs_min_weight(bool benchmark = false) {
         std::vector<bool> visited(num_vertex, false);
         for (int i = 0; i < num_vertex; i++) {
             if (!visited[i]) {
-                dfs_min_weight_helper(visited, i, -1, INF);
+                dfs_min_weight_helper(visited, i, -1, INF, benchmark);
             }
         }
-        std::cout << std::endl;
+        if (!benchmark) std::cout << std::endl;
     }
 
     //Алгоритм Флойда для знаходження найменшої відстані між усіма вершинами
-    void al_floyde() {
+    void al_floyde(bool benchmark = false) {
         std::vector<std::vector<double>> dis;
         dis = adj_matrix;
 
@@ -589,18 +632,21 @@ public:
             }
         }
 
-        std::cout << "Distance: \n";
-        for (int i = 0; i < num_vertex; ++i) {
-            std::cout << "Vertex " << i << ": ";
-            for (int j = 0; j < num_vertex; ++j) {
-                std::cout << std::setw(8) << adj_matrix[i][j];
+        if (!benchmark) {
+            std::cout << "Distance: \n";
+            for (int i = 0; i < num_vertex; ++i) {
+                std::cout << "Vertex " << i << ": ";
+                for (int j = 0; j < num_vertex; ++j) {
+                    std::cout << std::setw(8) << adj_matrix[i][j];
+                }
+                std::cout << std::endl;
             }
-            std::cout << std::endl;
         }
+
     }
 
     //Алгорит Дейкстри для пошуку наймешої відстані між однією вершиною і усіма іншими
-    void dijkstra(int start) {
+    void dijkstra(int start, bool benchmark = false) {
         if (start < 0 || start >= num_vertex) {
             std::cout << "Error: Invalid vertex.\n";
             return;
@@ -621,16 +667,18 @@ public:
             }
         }
 
-        std::cout << "Vertex \t Distance from Source\n";
-        for (int i = 0; i < num_vertex; ++i) {
-            std::cout << i << " \t ";
-            (dist[i] != INF ? std::cout << dist[i] : std::cout << "Path don`t exist");
-            std::cout << std::endl;
+        if (!benchmark) {
+            std::cout << "Vertex \t Distance from Source\n";
+            for (int i = 0; i < num_vertex; ++i) {
+                std::cout << i << " \t ";
+                (dist[i] != INF ? std::cout << dist[i] : std::cout << "Path don`t exist");
+                std::cout << std::endl;
+            }
         }
     }
 
     //Топологічне сортування
-    void topological_sort() {
+    void topological_sort(bool benchmark = false) {
         if (!directed) {
             std::cout << "Is undirected graph.\n";
             return;
@@ -643,7 +691,7 @@ public:
             if (!visited[i])
                 topological_sort_util(i, visited, Stack);
 
-        while (!Stack.empty()) {
+        while (!Stack.empty() && !benchmark) {
             std::cout << Stack.top() << " ";
             Stack.pop();
         }
@@ -653,7 +701,7 @@ public:
     adj_matrix_graph build_spanning_forest() {
         if (!is_connected()) {
             std::cout << "Graph isn`t connected.\n";
-            return;
+            return adj_matrix_graph();
         }
 
         std::vector<bool> visited(num_vertex, false);
@@ -666,7 +714,7 @@ public:
         return forest;
     }
 
-    void kruskal() {
+    void kruskal(bool benchmark = false) {
         if (!is_connected()) {
             std::cout << "Graph isn`t connected.\n";
             return;
@@ -684,16 +732,15 @@ public:
             int rootX = find(parent, edge.is);
             int rootY = find(parent, edge.to);
             if (rootX != rootY) { 
-                std::cout << edge.is << "->" << edge.to << " (" << edge.dis << ")\n";
+                if (!benchmark) std::cout << edge.is << "->" << edge.to << " (" << edge.dis << ")\n";
                 min_weight += edge.dis;
                 union_sets(parent, edge.is, edge.to);
             }
         }
-        std::cout << "Total weight of MST: " << min_weight << std::endl;
+        if (!benchmark) std::cout << "Total weight of MST: " << min_weight << std::endl;
     }
 
 private:
-    //Пошук найменшої відстані
     int min_distance(std::vector<double>& dist, std::vector<bool>& visited) {
         double min = INT_MAX; int min_index;
 
@@ -707,14 +754,24 @@ private:
         return min_index;
     }
 
-    //Перевірка чи ребро існує
     bool edge_exists(int u, int v) {
         return adj_matrix[u][v];
     }
 
-    void dfs_min_weight_helper(std::vector<bool>& visited, int v, int prev_vertex, double prev_weight) {
+    void DFS_util(int vertex, std::vector<bool>& visited, bool benchmark) {
+        visited[vertex] = true;
+        if (!benchmark) std::cout << vertex << " ";
+
+        for (int i = 0; i < num_vertex; ++i) {
+            if (adj_matrix[vertex][i] != 0 && !visited[i]) {
+                DFS_util(i, visited, benchmark);
+            }
+        }
+    }
+
+    void dfs_min_weight_helper(std::vector<bool>& visited, int v, int prev_vertex, double prev_weight, bool benchmark = false) {
         visited[v] = true;
-        std::cout << v << " ";
+        if (!benchmark) std::cout << v << " ";
 
         std::vector<std::pair<int, double>> sorted_neighbors;
         for (int i = 0; i < num_vertex; ++i) {
@@ -728,7 +785,7 @@ private:
 
         for (const auto& neighbor : sorted_neighbors) {
             if (!visited[neighbor.first]) {
-                dfs_min_weight_helper(visited, neighbor.first, v, neighbor.second);
+                dfs_min_weight_helper(visited, neighbor.first, v, neighbor.second, benchmark);
             }
         }
     }
@@ -749,21 +806,21 @@ private:
         visited[v] = 2;
     }
 
+    void dfs_connected(int v, std::vector<bool>& visited) {
+        visited[v] = true;
+        for (int i = 0; i < num_vertex; ++i) {
+            if (adj_matrix[v][i] != 0 && !visited[i]) {
+                dfs_connected(i, visited);
+            }
+        }
+    }
+
     void dfs_connected_components(int v, std::vector<bool>& visited, std::vector<int>& component) {
         visited[v] = true;
         component.push_back(v);
         for (int i = 0; i < num_vertex; ++i) {
             if (adj_matrix[v][i] != 0 && !visited[i]) {
                 dfs_connected_components(i, visited, component);
-            }
-        }
-    }
-
-    void dfs_connected(int v, std::vector<bool>& visited) {
-        visited[v] = true;
-        for (int i = 0; i < num_vertex; ++i) {
-            if (adj_matrix[v][i] != 0 && !visited[i]) {
-                dfs_connected(i, visited);
             }
         }
     }
@@ -816,17 +873,6 @@ private:
 
         return edges;
     }
-
-    void DFS_util(int vertex, std::vector<bool>& visited) {
-        visited[vertex] = true;
-        std::cout << vertex << " ";
-
-        for (int i = 0; i < num_vertex; ++i) {
-            if (adj_matrix[vertex][i] != 0 && !visited[i]) {
-                DFS_util(i, visited);
-            }
-        }
-    }
 };
 
 adj_matrix_graph convert_list_to_matrix(const adj_list_graph& graph) {
@@ -859,7 +905,7 @@ adj_list_graph convert_matrix_to_list(const adj_matrix_graph& graph) {
             if (graph.adj_matrix[i][j] != 0) {
                 result.adj_list[i].push_back({ j, graph.adj_matrix[i][j] });
                 if (!graph.directed && i != j) {
-                    result.adj_list[j].push_back({ i, graph.adj_matrix[i][j] }); // If undirected, add reverse edge
+                    result.adj_list[j].push_back({ i, graph.adj_matrix[i][j] }); 
                 }
             }
         }
@@ -871,12 +917,26 @@ adj_list_graph convert_matrix_to_list(const adj_matrix_graph& graph) {
 
 void dem_mode();
 
+
 void benchmark();
+void benchmark_undir_matrix();
+void benchmark_dir_matrix();
+void benchmark_undir_list();
+void benchmark_dir_list();
+
+void clear_console();
 
 int main()
 {
     srand(time(nullptr));
-    dem_mode();
+    //srand(time(nullptr));
+    //dem_mode();
+    benchmark();
+}
+void clear_console() {
+    std::cout << "Press any key to clear the console...";
+    std::cin.get();
+    std::system("clear || cls");
 }
 
 void dem_mode() {
@@ -1016,7 +1076,8 @@ void dem_mode() {
     std::cout << "Let's create a spanning tree using the depth-first search method\n";
     std::this_thread::sleep_for(std::chrono::seconds(1));
     std::cout << "Second graph(adj_list + undirected): \n";
-    adj_list_graph list_span_graph = list_graph_undir.build_spanning_forest();
+    adj_list_graph list_span_graph;
+    list_graph_undir.build_spanning_forest(list_span_graph);
     list_span_graph.print_graph();
     std::cout << std::endl;
     std::this_thread::sleep_for(std::chrono::seconds(1));
@@ -1041,6 +1102,333 @@ void dem_mode() {
 
 }
 
+
+void benchmark_undir_matrix() {
+    std::cout << "Benchmark for undirected graph (adjacency matrix)\n\n";
+    adj_matrix_graph graph(bm_ver);
+
+    auto start_cg = std::chrono::high_resolution_clock::now();
+    {
+        BenchmarkMax memoryBenchmark("Create random graph");
+        graph.create_random_graph(bm_ed, bm_mw);
+    }
+    auto end_cg = std::chrono::high_resolution_clock::now();
+    auto duration_cg = std::chrono::duration_cast<std::chrono::milliseconds>(end_cg- start_cg);
+    std::cout << "Time taken by create graph function: " << duration_cg.count() << " milliseconds" << std::endl << std::endl;
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+
+    auto start_ic = std::chrono::high_resolution_clock::now();
+    {
+        BenchmarkMax memoryBenchmark("Check connected");
+        graph.is_connected();
+    }
+    auto end_ic = std::chrono::high_resolution_clock::now();
+    auto duration_ic = std::chrono::duration_cast<std::chrono::milliseconds>(end_ic - start_ic);
+    std::cout << "Time taken by is_concected function: " << duration_ic.count() << " milliseconds" << std::endl << std::endl;
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+
+    auto start_fcc = std::chrono::high_resolution_clock::now();
+    {
+        BenchmarkMax memoryBenchmark("Find connected components");
+        graph.find_connected_components(bm);
+    }
+
+    auto end_fcc = std::chrono::high_resolution_clock::now();
+    auto duration_fcc = std::chrono::duration_cast<std::chrono::milliseconds>(end_fcc - start_fcc);
+    std::cout << "Time taken by Find connected components function: " << duration_fcc.count() << " milliseconds" << std::endl << std::endl;
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+
+    auto start_dfs = std::chrono::high_resolution_clock::now();
+    {
+        BenchmarkMax memoryBenchmark("DFS");
+        graph.DFS(0, bm);
+    }
+    auto end_dfs = std::chrono::high_resolution_clock::now();
+    auto duration_dfs = std::chrono::duration_cast<std::chrono::milliseconds>(end_dfs - start_dfs);
+    std::cout << "Time taken by DFS function: " << duration_dfs.count() << " milliseconds" << std::endl << std::endl;
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+
+    auto start_dfsmin = std::chrono::high_resolution_clock::now();
+    {
+        BenchmarkMax memoryBenchmark("DFS min meight edge");
+        graph.dfs_min_weight(bm);
+    }
+    auto end_dfsmin = std::chrono::high_resolution_clock::now();
+    auto duration_dfsmin = std::chrono::duration_cast<std::chrono::milliseconds>(end_dfsmin - start_dfsmin);
+    std::cout << "Time taken by DFS min meight edge function: " << duration_dfs.count() << " milliseconds" << std::endl << std::endl;
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+
+    auto start_af = std::chrono::high_resolution_clock::now();
+    {
+        BenchmarkMax memoryBenchmark("Floyd alogrorithm");
+        graph.al_floyde(bm);
+    }
+    auto end_af = std::chrono::high_resolution_clock::now();
+    auto duration_af = std::chrono::duration_cast<std::chrono::milliseconds>(end_af - start_af);
+    std::cout << "Time taken by Floyde algorithm: " << duration_af.count() << " milliseconds" << std::endl << std::endl;
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+
+    auto start_dj = std::chrono::high_resolution_clock::now();
+    {
+        BenchmarkMax memoryBenchmark("Dijkstra alogrorithm");
+        graph.dijkstra(0, bm);
+    }
+    auto end_dj = std::chrono::high_resolution_clock::now();
+    auto duration_dj = std::chrono::duration_cast<std::chrono::milliseconds>(end_dj - start_dj);
+    std::cout << "Time taken by Dijkstra algorithm: " << duration_dj.count() << " milliseconds" << std::endl << std::endl;
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+
+    auto start_st = std::chrono::high_resolution_clock::now();
+    {
+        BenchmarkMax memoryBenchmark("Build spanning forest");
+        adj_matrix_graph spanning_tree = graph.build_spanning_forest();
+    }
+    auto end_st = std::chrono::high_resolution_clock::now();
+    auto duration_st = std::chrono::duration_cast<std::chrono::milliseconds>(end_st - start_st);
+    std::cout << "Time taken by build_spanning_forest function: " << duration_st.count() << " milliseconds" << std::endl << std::endl;
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+
+    auto start_kr = std::chrono::high_resolution_clock::now();
+    {
+        BenchmarkMax memoryBenchmark("Kruskal algorithm");
+        graph.kruskal(bm);
+    }
+    auto end_kr = std::chrono::high_resolution_clock::now();
+    auto duration_kr = std::chrono::duration_cast<std::chrono::milliseconds>(end_kr - start_kr);
+    std::cout << "Time taken by Kruskal algorithm: " << duration_kr.count() << " milliseconds" << std::endl << std::endl;
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+}
+void benchmark_dir_matrix() {
+    std::cout << "Benchmark for directed graph (adjacency matrix)\n\n";
+    adj_matrix_graph dir_graph(bm_ver, true);
+
+    auto start_cg = std::chrono::high_resolution_clock::now();
+    {
+        BenchmarkMax memoryBenchmark("Create random graph");
+        dir_graph.create_random_graph(bm_ed, bm_mw);
+    }
+    auto end_cg = std::chrono::high_resolution_clock::now();
+    auto duration_cg = std::chrono::duration_cast<std::chrono::milliseconds>(end_cg - start_cg);
+    std::cout << "Time taken by create graph function: " << duration_cg.count() << " milliseconds" << std::endl << std::endl;
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+
+    auto start_ia = std::chrono::high_resolution_clock::now();
+    {
+        BenchmarkMax memoryBenchmark("Check acyclic");
+        dir_graph.is_acyclic();
+    }
+    auto end_ia = std::chrono::high_resolution_clock::now();
+    auto duration_ia = std::chrono::duration_cast<std::chrono::milliseconds>(end_ia - start_ia);
+    std::cout << "Time taken by check acyclic function: " << duration_ia.count() << " milliseconds" << std::endl << std::endl;
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+
+    auto start_dfs = std::chrono::high_resolution_clock::now();
+    {
+        BenchmarkMax memoryBenchmark("DFS");
+        dir_graph.DFS(0, bm);
+    }
+    auto end_dfs = std::chrono::high_resolution_clock::now();
+    auto duration_dfs = std::chrono::duration_cast<std::chrono::milliseconds>(end_dfs - start_dfs);
+    std::cout << "Time taken by DFS function: " << duration_dfs.count() << " milliseconds" << std::endl << std::endl;
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+
+    auto start_dfsmin = std::chrono::high_resolution_clock::now();
+    {
+        BenchmarkMax memoryBenchmark("DFS min meight edge");
+        dir_graph.dfs_min_weight(bm);
+    }
+    auto end_dfsmin = std::chrono::high_resolution_clock::now();
+    auto duration_dfsmin = std::chrono::duration_cast<std::chrono::milliseconds>(end_dfsmin - start_dfsmin);
+    std::cout << "Time taken by DFS min meight edge function: " << duration_dfs.count() << " milliseconds" << std::endl << std::endl;
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+
+    auto start_af = std::chrono::high_resolution_clock::now();
+    {
+        BenchmarkMax memoryBenchmark("Floyd alogrorithm");
+        dir_graph.al_floyde(bm);
+    }
+    auto end_af = std::chrono::high_resolution_clock::now();
+    auto duration_af = std::chrono::duration_cast<std::chrono::milliseconds>(end_af - start_af);
+    std::cout << "Time taken by Floyde algorithm: " << duration_af.count() << " milliseconds" << std::endl << std::endl;
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+
+    auto start_dj = std::chrono::high_resolution_clock::now();
+    {
+        BenchmarkMax memoryBenchmark("Dijkstra alogrorithm");
+        dir_graph.dijkstra(0, bm);
+    }
+    auto end_dj = std::chrono::high_resolution_clock::now();
+    auto duration_dj = std::chrono::duration_cast<std::chrono::milliseconds>(end_dj - start_dj);
+    std::cout << "Time taken by Dijkstra algorithm: " << duration_dj.count() << " milliseconds" << std::endl << std::endl;
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+
+    auto start_ts = std::chrono::high_resolution_clock::now();
+    {
+        BenchmarkMax memoryBenchmark("Topological sort");
+        dir_graph.topological_sort(bm);
+    }
+    auto end_ts = std::chrono::high_resolution_clock::now();
+    auto duration_ts = std::chrono::duration_cast<std::chrono::milliseconds>(end_ts - start_ts);
+    std::cout << "Time taken by topological sort alogrithm: " << duration_ts.count() << " milliseconds" << std::endl << std::endl;
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+}
+void benchmark_undir_list() {
+    std::cout << "Benchmark for undirected graph (adjacency list)\n\n";
+    adj_list_graph graph(bm_ver);
+
+    auto start_cg = std::chrono::high_resolution_clock::now();
+    {
+        BenchmarkMax memoryBenchmark("Create random graph");
+        graph.create_random_graph(bm_ed, bm_mw);
+    }
+    auto end_cg = std::chrono::high_resolution_clock::now();
+    auto duration_cg = std::chrono::duration_cast<std::chrono::milliseconds>(end_cg - start_cg);
+    std::cout << "Time taken by create graph function: " << duration_cg.count() << " milliseconds" << std::endl << std::endl;
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+
+    auto start_ic = std::chrono::high_resolution_clock::now();
+    {
+        BenchmarkMax memoryBenchmark("Check connected");
+        graph.is_connected();
+    }
+    auto end_ic = std::chrono::high_resolution_clock::now();
+    auto duration_ic = std::chrono::duration_cast<std::chrono::milliseconds>(end_ic - start_ic);
+    std::cout << "Time taken by is_concected function: " << duration_ic.count() << " milliseconds" << std::endl << std::endl;
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+
+    auto start_fcc = std::chrono::high_resolution_clock::now();
+    {
+        BenchmarkMax memoryBenchmark("Find connected components");
+        graph.find_connected_components(bm);
+    }
+
+    auto end_fcc = std::chrono::high_resolution_clock::now();
+    auto duration_fcc = std::chrono::duration_cast<std::chrono::milliseconds>(end_fcc - start_fcc);
+    std::cout << "Time taken by Find connected components function: " << duration_fcc.count() << " milliseconds" << std::endl << std::endl;
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+
+    auto start_dfs = std::chrono::high_resolution_clock::now();
+    {
+        BenchmarkMax memoryBenchmark("DFS");
+        graph.DFS(0, bm);
+    }
+    auto end_dfs = std::chrono::high_resolution_clock::now();
+    auto duration_dfs = std::chrono::duration_cast<std::chrono::milliseconds>(end_dfs - start_dfs);
+    std::cout << "Time taken by DFS function: " << duration_dfs.count() << " milliseconds" << std::endl << std::endl;
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+
+    auto start_dfsmin = std::chrono::high_resolution_clock::now();
+    {
+        BenchmarkMax memoryBenchmark("DFS min meight edge");
+        graph.dfs_min_weight(bm);
+    }
+    auto end_dfsmin = std::chrono::high_resolution_clock::now();
+    auto duration_dfsmin = std::chrono::duration_cast<std::chrono::milliseconds>(end_dfsmin - start_dfsmin);
+    std::cout << "Time taken by DFS min meight edge function: " << duration_dfs.count() << " milliseconds" << std::endl << std::endl;
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+
+    auto start_dj = std::chrono::high_resolution_clock::now();
+    {
+        BenchmarkMax memoryBenchmark("Dijkstra alogrorithm");
+        graph.dijkstra(0, bm);
+    }
+    auto end_dj = std::chrono::high_resolution_clock::now();
+    auto duration_dj = std::chrono::duration_cast<std::chrono::milliseconds>(end_dj - start_dj);
+    std::cout << "Time taken by Dijkstra algorithm: " << duration_dj.count() << " milliseconds" << std::endl << std::endl;
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+
+    auto start_st = std::chrono::high_resolution_clock::now();
+    {
+        BenchmarkMax memoryBenchmark("Build spanning forest");
+        adj_list_graph spaning_tree;
+        graph.build_spanning_forest(spaning_tree);
+    }
+    auto end_st = std::chrono::high_resolution_clock::now();
+    auto duration_st = std::chrono::duration_cast<std::chrono::milliseconds>(end_st - start_st);
+    std::cout << "Time taken by build_spanning_forest function: " << duration_st.count() << " milliseconds" << std::endl << std::endl;
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+
+    auto start_kr = std::chrono::high_resolution_clock::now();
+    {
+        BenchmarkMax memoryBenchmark("Kruskal algorithm");
+        graph.kruskal(bm);
+    }
+    auto end_kr = std::chrono::high_resolution_clock::now();
+    auto duration_kr = std::chrono::duration_cast<std::chrono::milliseconds>(end_kr - start_kr);
+    std::cout << "Time taken by Kruskal algorithm: " << duration_kr.count() << " milliseconds" << std::endl << std::endl;
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+}
+void benchmark_dir_list() {
+    std::cout << "Benchmark for directed graph (adjacency matrix)\n\n";
+    adj_list_graph dir_graph(bm_ver, true);
+
+    auto start_cg = std::chrono::high_resolution_clock::now();
+    {
+        BenchmarkMax memoryBenchmark("Create random graph");
+        dir_graph.create_random_graph(bm_ed, bm_mw);
+    }
+    auto end_cg = std::chrono::high_resolution_clock::now();
+    auto duration_cg = std::chrono::duration_cast<std::chrono::milliseconds>(end_cg - start_cg);
+    std::cout << "Time taken by create graph function: " << duration_cg.count() << " milliseconds" << std::endl << std::endl;
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+
+    auto start_ia = std::chrono::high_resolution_clock::now();
+    {
+        BenchmarkMax memoryBenchmark("Check acyclich");
+        dir_graph.is_acyclic();
+    }
+    auto end_ia = std::chrono::high_resolution_clock::now();
+    auto duration_ia = std::chrono::duration_cast<std::chrono::milliseconds>(end_ia - start_ia);
+    std::cout << "Time taken by check acyclic function: " << duration_ia.count() << " milliseconds" << std::endl << std::endl;
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+
+    auto start_dfs = std::chrono::high_resolution_clock::now();
+    {
+        BenchmarkMax memoryBenchmark("DFS");
+        dir_graph.DFS(0, bm);
+    }
+    auto end_dfs = std::chrono::high_resolution_clock::now();
+    auto duration_dfs = std::chrono::duration_cast<std::chrono::milliseconds>(end_dfs - start_dfs);
+    std::cout << "Time taken by DFS function: " << duration_dfs.count() << " milliseconds" << std::endl << std::endl;
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+
+    auto start_dfsmin = std::chrono::high_resolution_clock::now();
+    {
+        BenchmarkMax memoryBenchmark("DFS min meight edge");
+        dir_graph.dfs_min_weight(bm);
+    }
+    auto end_dfsmin = std::chrono::high_resolution_clock::now();
+    auto duration_dfsmin = std::chrono::duration_cast<std::chrono::milliseconds>(end_dfsmin - start_dfsmin);
+    std::cout << "Time taken by DFS min meight edge function: " << duration_dfs.count() << " milliseconds" << std::endl << std::endl;
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+
+    auto start_dj = std::chrono::high_resolution_clock::now();
+    {
+        BenchmarkMax memoryBenchmark("Dijkstra alogrorithm");
+        dir_graph.dijkstra(0, bm);
+    }
+    auto end_dj = std::chrono::high_resolution_clock::now();
+    auto duration_dj = std::chrono::duration_cast<std::chrono::milliseconds>(end_dj - start_dj);
+    std::cout << "Time taken by Dijkstra algorithm: " << duration_dj.count() << " milliseconds" << std::endl << std::endl;
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+
+    auto start_ts = std::chrono::high_resolution_clock::now();
+    {
+        BenchmarkMax memoryBenchmark("Topological sort");
+        dir_graph.topological_sort(bm);
+    }
+    auto end_ts = std::chrono::high_resolution_clock::now();
+    auto duration_ts = std::chrono::duration_cast<std::chrono::milliseconds>(end_ts - start_ts);
+    std::cout << "Time taken by topological sort alogrithm: " << duration_ts.count() << " milliseconds" << std::endl << std::endl;
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+}
+
 void benchmark() {
-    std::cout << "Benchmark mode\n";
+    benchmark_undir_matrix();
+    clear_console();
+    benchmark_dir_matrix();
+    clear_console();
+    benchmark_undir_list();
+    clear_console();
+    benchmark_dir_list();
 }
