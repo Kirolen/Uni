@@ -19,6 +19,7 @@
 #include <iomanip>
 #include <chrono>
 #include <thread>
+#include <string>
 #include <C:\Users\Lenovo\Desktop\Uni\2 Cour\Programing\Labs\Lab #5\Graphs\Graphs\benchmark.h>
 
 #define INF 1e9
@@ -108,20 +109,20 @@ public:
     }
 
     //Створення випадковго графу з n вершинами
-    void create_random_graph(int n, int max_weight) {
+    void create_random_graph(int n, double max_weight) {
         int edges_added = 0;
         while (edges_added < n) {
             int u = std::rand() % num_vertex;
             int v = std::rand() % num_vertex;
-            float raw_weight = 1.0f + static_cast<float>(std::rand()) / (static_cast<float>(RAND_MAX / max_weight));
-            float weight = roundf(raw_weight * 10) / 10;
-
             if (u != v && !edge_exists(u, v)) {
+                double raw_weight = static_cast<double>(std::rand()) / (static_cast<double>(RAND_MAX / max_weight));
+                double weight = round(raw_weight * 10) / 10.0; // Round to one decimal place
                 add_edge(u, v, weight);
                 edges_added++;
             }
         }
     }
+
 
     //Перевірка чи граф зв'язний
     bool is_connected() {
@@ -303,7 +304,6 @@ public:
         }
         if (!benchmark) std::cout << "Total weight of MST: " << min_weight << std::endl;
     }
-
 
 private:
     //Допоміжна функція перевірки існування ребра (додавання та видалення ребра)
@@ -924,18 +924,305 @@ void benchmark_dir_matrix();
 void benchmark_undir_list();
 void benchmark_dir_list();
 
+void interactive_mode();
+void interactive_mode_list();
+void interactive_mode_matrix();
+
 void clear_console();
 
 int main()
 {
     srand(time(nullptr));
-    //srand(time(nullptr));
-    //dem_mode();
-    benchmark();
+    bool exit = false;
+    while (!exit) {
+        std::cout << "Choose mode:\n"
+            "1. Interactive mode;\n"
+            "2. Demonstration mode;\n"
+            "3. Benchmark mode;\n"
+            "4. Exit.\n";
+        int mode;
+        std::cin >> mode;
+        switch (mode) {
+        case 1:
+            break;
+        case 2:
+            dem_mode();
+            break;
+        case 3:
+            benchmark();
+            break;
+        case 4:
+            exit = true;
+            break;
+        default:
+            std::cout << "Wrong mode!\n";
+            break;
+        }
+    }
+}
+void interactive_mode() {
+
+    std::cout << "Choose type of graph:\n"
+        "1. Adjacency list\n"
+        "2. Adjacency matrix\n"
+        "3. Exit\n";
+        int mode;
+        std::cin >> mode;
+        switch (mode) {
+        case 1:
+            std::cout << "Adjacency list\n";
+            interactive_mode_list();
+            break;
+        case 2:
+            std::cout << "Adjacency matrix\n";
+            interactive_mode_matrix();
+            break;
+        default:
+            std::cout << "Wrong mode!\n";
+            break;
+        }
+}
+
+void interactive_mode_list() {
+    int choice;
+    bool exit = false;
+    int numVertex;
+    std::cout << "Enter num of vertex: ";
+    std::cin >> numVertex;
+    bool directed;
+    std::cout << "Is directed graphs? (Y or y - yes): ";
+    char a; std::cin >> a;
+    directed = (a == 'Y' || a == 'y') ? true : false;
+    adj_list_graph graph(numVertex, directed);
+    adj_list_graph spanning_forest;
+
+    while (!exit) {
+        std::cout << "\n--- Menu ---" << std::endl;
+        std::cout << "1. Add Edge" << std::endl;
+        std::cout << "2. Remove Edge" << std::endl;
+        std::cout << "3. Print Graph" << std::endl;
+        std::cout << "4. Check Connectivity" << std::endl;
+        std::cout << "5. Find Connected Components" << std::endl;
+        std::cout << "6. Check Acyclicity" << std::endl;
+        std::cout << "7. Depth-First Search" << std::endl;
+        std::cout << "8. Depth-First Search for Minimum Weight" << std::endl;
+        std::cout << "9. Dijkstra's Algorithm" << std::endl;
+        std::cout << "10. Topological Sort" << std::endl;
+        std::cout << "11. Build Spanning Forest" << std::endl;
+        std::cout << "12. Kruskal's Algorithm" << std::endl;
+        std::cout << "13. Exit" << std::endl;
+        std::cout << "Enter your choice: ";
+        std::cin >> choice;
+
+        switch (choice) {
+        case 1: {
+            int u, v;
+            double weight;
+            std::cout << "Enter source vertex: ";
+            std::cin >> u;
+            std::cout << "Enter destination vertex: ";
+            std::cin >> v;
+            std::cout << "Enter weight: ";
+            std::cin >> weight;
+            graph.add_edge(u, v, weight);
+            break;
+        }
+        case 2: {
+            int u, v;
+            std::cout << "Enter source vertex: ";
+            std::cin >> u;
+            std::cout << "Enter destination vertex: ";
+            std::cin >> v;
+            graph.remove_edge(u, v);
+            break;
+        }
+        case 3: {
+            graph.print_graph();
+            break;
+        }
+        case 4: {
+            bool connected = graph.is_connected();
+            std::cout << (connected ? "Graph is connected." : "Graph is not connected.") << std::endl;
+            break;
+        }
+        case 5: {
+            graph.find_connected_components();
+            break;
+        }
+        case 6: {
+            bool acyclic = graph.is_acyclic();
+            std::cout << (acyclic ? "Graph is acyclic." : "Graph has cycles.") << std::endl;
+            break;
+        }
+        case 7: {
+            graph.DFS();
+            break;
+        }
+        case 8: {
+            graph.dfs_min_weight();
+            break;
+        }
+        case 9: {
+            int source;
+            std::cout << "Enter source vertex for Dijkstra's Algorithm: ";
+            std::cin >> source;
+            graph.dijkstra(source);
+            break;
+        }
+        case 10: {
+            graph.topological_sort();
+            break;
+        }
+        case 11: {
+            graph.build_spanning_forest(spanning_forest);
+            std::cout << "Spanning Forest created." << std::endl;
+            spanning_forest.print_graph();
+            break;
+        }
+        case 12: {
+            graph.kruskal();
+            break;
+        }
+        case 13: {
+            exit = true;
+            break;
+        }
+        default: {
+            std::cout << "Invalid choice. Please enter a number between 1 and 14." << std::endl;
+            break;
+        }
+        }
+    }
+
+
+}
+void interactive_mode_matrix() {
+    int choice;
+    bool exit = false;
+    int numVertex;
+    std::cout << "Enter num of vertex: ";
+    std::cin >> numVertex;
+    bool directed;
+    std::cout << "Is directed graphs? (Y or y - yes): ";
+    char a; std::cin >> a;
+    directed = (a == 'Y' || a == 'y') ? true : false;
+    adj_matrix_graph graph(numVertex, directed);
+    adj_matrix_graph spanning_forest;
+
+    int choice;
+    do {
+        std::cout << "\n--- Menu ---" << std::endl;
+        std::cout << "1. Add edge" << std::endl;
+        std::cout << "2. Remove edge" << std::endl;
+        std::cout << "3. Print graph" << std::endl;
+        std::cout << "4. Create random graph" << std::endl;
+        std::cout << "5. Check if connected" << std::endl;
+        std::cout << "6. Find connected components" << std::endl;
+        std::cout << "7. Check if acyclic" << std::endl;
+        std::cout << "8. Depth-first search (DFS)" << std::endl;
+        std::cout << "9. DFS for minimum weight" << std::endl;
+        std::cout << "10. Floyd-Warshall algorithm" << std::endl;
+        std::cout << "11. Dijkstra's algorithm" << std::endl;
+        std::cout << "12. Topological sort" << std::endl;
+        std::cout << "13. Build spanning forest" << std::endl;
+        std::cout << "14. Kruskal's algorithm" << std::endl;
+        std::cout << "0. Exit" << std::endl;
+        std::cout << "Enter your choice: ";
+        std::cin >> choice;
+
+        switch (choice) {
+        case 1: {
+            int u, v;
+            double weight;
+            std::cout << "Enter source vertex: ";
+            std::cin >> u;
+            std::cout << "Enter destination vertex: ";
+            std::cin >> v;
+            std::cout << "Enter weight: ";
+            std::cin >> weight;
+            graph.add_edge(u, v, weight);
+            break;
+        }
+        case 2: {
+            int u, v;
+            std::cout << "Enter source vertex: ";
+            std::cin >> u;
+            std::cout << "Enter destination vertex: ";
+            std::cin >> v;
+            graph.remove_edge(u, v);
+            break;
+        }
+        case 3:
+            graph.print_graph();
+            break;
+        case 4: {
+            int n, max_weight;
+            std::cout << "Enter the number of edges: ";
+            std::cin >> n;
+            std::cout << "Enter the maximum weight: ";
+            std::cin >> max_weight;
+            graph.create_random_graph(n, max_weight);
+            break;
+        }
+        case 5:
+            std::cout << "Graph is " << (graph.is_connected() ? "" : "not ") << "connected." << std::endl;
+            break;
+        case 6:
+            graph.find_connected_components();
+            break;
+        case 7:
+            std::cout << "Graph is " << (graph.is_acyclic() ? "" : "not ") << "acyclic." << std::endl;
+            break;
+        case 8:
+            std::cout << "Depth-first search (DFS) starting from vertex 0:" << std::endl;
+            graph.DFS();
+            std::cout << std::endl;
+            break;
+        case 9:
+            std::cout << "DFS for minimum weight starting from vertex 0:" << std::endl;
+            graph.dfs_min_weight();
+            std::cout << std::endl;
+            break;
+        case 10:
+            std::cout << "Applying Floyd-Warshall algorithm:" << std::endl;
+            graph.al_floyde();
+            break;
+        case 11: {
+            int start_vertex;
+            std::cout << "Enter the starting vertex: ";
+            std::cin >> start_vertex;
+            graph.dijkstra(start_vertex);
+            break;
+        }
+        case 12:
+            std::cout << "Topological sorting:" << std::endl;
+            graph.topological_sort();
+            std::cout << std::endl;
+            break;
+        case 13: {
+            std::cout << "Building spanning forest:" << std::endl;
+            adj_matrix_graph forest = graph.build_spanning_forest();
+            std::cout << "Spanning forest: " << std::endl;
+            forest.print_graph();
+            break;
+        }
+        case 14:
+            std::cout << "Applying Kruskal's algorithm:" << std::endl;
+            graph.kruskal();
+            break;
+        case 0:
+            std::cout << "Exiting..." << std::endl;
+            break;
+        default:
+            std::cout << "Invalid choice. Please try again." << std::endl;
+        }
+    } while (choice != 0);
 }
 void clear_console() {
-    std::cout << "Press any key to clear the console...";
-    std::cin.get();
+    std::cout << "Enter any symbol and press enter to clear the console...";
+    char k;
+    std::cin >> k;
+    std::cin.ignore(1000, '\n');
     std::system("clear || cls");
 }
 
