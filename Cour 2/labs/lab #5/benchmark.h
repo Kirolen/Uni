@@ -6,6 +6,15 @@
 #include "windows.h"
 #include "psapi.h"
 
+inline long long memory_difference(size_t start, size_t end) {
+  if (end >= start) {
+    return end-start;
+  } else {
+    return -(start-end);
+  }
+
+}
+
 struct BenchmarkMax {
     size_t start_virtual_memory;
     size_t start_physical_memory;
@@ -28,40 +37,40 @@ struct BenchmarkMax {
         return physMemUsedByMe;
     }
 
-    BenchmarkMax(std::string name) :
-        start_virtual_memory(get_current_virtual_memory()),
-        start_physical_memory(get_current_physical_memory()),
-        name(name),
-        max_virtual_memory(0),
-        max_physical_memory(0),
-        is_running(true),
-        measurement_thread(&BenchmarkMax::run, this)
-    { }
+BenchmarkMax(std::string name):
+      start_virtual_memory(get_current_virtual_memory()),
+      start_physical_memory(get_current_physical_memory()),
+      name(name),
+      max_virtual_memory(0),
+      max_physical_memory(0),
+      is_running(true),
+      measurement_thread(&BenchmarkMax::run, this)
+      { }
 
 
-    void measure() {
-        size_t current_virtual_memory = get_current_virtual_memory();
-        if (current_virtual_memory > max_virtual_memory) {
-            max_virtual_memory = current_virtual_memory;
-        }
-
-        size_t current_physical_memory = get_current_physical_memory();
-        if (current_physical_memory > max_physical_memory) {
-            max_physical_memory = current_physical_memory;
-        }
+  void measure() {
+    size_t current_virtual_memory = get_current_virtual_memory();
+    if (current_virtual_memory > max_virtual_memory) {
+      max_virtual_memory = current_virtual_memory;
     }
 
-    void run() {
-        while (is_running) {
-            measure();
-        }
+    size_t current_physical_memory = get_current_physical_memory();
+    if (current_physical_memory > max_physical_memory) {
+      max_physical_memory = current_physical_memory;
     }
+  }
 
-    ~BenchmarkMax() {
-        is_running = false;
-        measurement_thread.join();
+  void run() {
+    do {
+      measure();
+    } while(is_running); // need to run measure at least once
+  }
 
-        std::cout << "BenchmarkMax " << name << ": virtual " << max_virtual_memory - start_virtual_memory <<
-            " bytes, physical " << max_physical_memory - start_physical_memory << " bytes" << std::endl;
-    }
+  ~BenchmarkMax() {
+    is_running = false;
+    measurement_thread.join();
+
+    std::cout<<"BenchmarkMax "<<name<<": virtual "<< memory_difference(start_virtual_memory, max_virtual_memory) <<
+        " bytes, physical " << memory_difference(start_physical_memory, max_physical_memory) << " bytes"<< std::endl;
+  }
 };
