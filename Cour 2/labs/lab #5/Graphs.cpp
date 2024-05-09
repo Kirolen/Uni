@@ -20,7 +20,7 @@
 #include <chrono>
 #include <thread>
 #include <string>
-#include <C:\Users\Lenovo\Desktop\Uni\2 Cour\Programing\Labs\Lab #5\Graphs\Graphs\benchmark.h>
+#include <benchmark.h>
 
 #define INF 1e9
 #define bm_ver 100
