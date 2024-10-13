@@ -1,0 +1,225 @@
+#include <iostream>
+#include <fstream>
+#include <vector>
+
+#define INPUT_FILE_A "Input File A.txt"
+#define INPUT_FILE_B "Input File B.txt"
+#define TEMP_FILE_A "Temp File A.txt"
+#define TEMP_FILE_B "Temp File B.txt"
+#define DATA_FILE "Data File.txt"
+#define FINAL_OUTPUT_FILE "Final Output File.txt"
+
+using namespace std;
+
+//Функція для зчитування даних з файлу у вектор починаючи з заданої позиції.
+vector<int> read(const string& filename, int count, int& position) {
+    vector<int> result;
+    int value;
+
+    ifstream file(filename);
+    file.seekg(position);
+
+    for (int i = 0; i < count && file >> value; ++i)
+        result.push_back(value);
+
+    position = file.tellg();
+    return result;
+}
+
+//Функція для зчитування одного значення з файлу за вказаною позицією.
+int read(const string& filename, int& position) {
+    ifstream file(filename);
+    file.seekg(position);
+
+    int value = 0;
+    if (!file.eof()) file >> value;
+    position = file.tellg();
+
+    return value;
+}
+
+//Функція запису у файл.
+void write(const string& filename, const vector<int>& values) {
+    ofstream file(filename, ios_base::app);
+    for (int value : values)
+        file << value << " ";
+}
+
+//Функція запису одного значення в файл.
+void write(const string& filename, int value) {
+    ofstream file(filename, ios_base::app);
+    file << value << " ";
+}
+
+//Функція видалення вмісту файлу.
+void clear(const string& filename) {
+    ofstream(filename, ios_base::trunc).close();
+}
+
+// Функція очищення всіх допоміжних файлів.
+void clearAll() {
+    clear(INPUT_FILE_A);
+    clear(INPUT_FILE_B);
+    clear(TEMP_FILE_A);
+    clear(TEMP_FILE_B);
+}
+
+//Перевірка чи файл пустий
+bool isFileEmpty(const string& filename) {
+    ifstream file(filename);
+    return file.good() && file.peek() == ifstream::traits_type::eof();
+}
+
+//Перевірка чи файл відсортований
+bool isSorted(const string& filename) {
+    ifstream file(filename);
+    int previousValue, currentValue;
+
+    if (!(file >> previousValue)) return true;
+
+    while (file >> currentValue) {
+        if (previousValue > currentValue) return false;
+        previousValue = currentValue;
+    }
+
+    return true;
+}
+
+//Функція злиття двох відсортованих частин масиву.
+void merge(vector<int>& array, int left, int middle, int right) {
+    int leftSize = middle - left + 1;
+    int rightSize = right - middle;
+
+    vector<int> leftArray(leftSize), rightArray(rightSize);
+
+    for (int i = 0; i < leftSize; ++i)
+        leftArray[i] = array[left + i];
+    for (int j = 0; j < rightSize; ++j)
+        rightArray[j] = array[middle + 1 + j];
+
+    int leftIndex = 0, rightIndex = 0;
+    int mergedIndex = left;
+
+    while (leftIndex < leftSize && rightIndex < rightSize) {
+        if (leftArray[leftIndex] <= rightArray[rightIndex])
+            array[mergedIndex++] = leftArray[leftIndex++];
+        else
+            array[mergedIndex++] = rightArray[rightIndex++];
+    }
+
+    while (leftIndex < leftSize)
+        array[mergedIndex++] = leftArray[leftIndex++];
+
+    while (rightIndex < rightSize)
+        array[mergedIndex++] = rightArray[rightIndex++];
+}
+
+//Функція сортування злиттям
+void mergeSort(vector<int>& array, int left, int right) {
+    if (left < right) {
+        int middle = left + (right - left) / 2;
+
+        mergeSort(array, left, middle);
+        mergeSort(array, middle + 1, right);
+
+        merge(array, left, middle, right);
+    }
+}
+
+// Функція розділення вектору на одноелементні вектори
+void divide(const string& inputFile, int chunkSize) {
+    int position = 0;
+    string outputFile = INPUT_FILE_A;
+    vector<int> chunk;
+
+    while (true) {
+        chunk = read(inputFile, chunkSize, position);
+        if (chunk.empty()) break;
+
+        mergeSort(chunk, 0, chunk.size() - 1);
+        write(outputFile, chunk);
+
+        outputFile = (outputFile == INPUT_FILE_A) ? INPUT_FILE_B : INPUT_FILE_A;
+    }
+}
+
+//Функція реалізації багатоффазного злиття.
+void polyphaseMerge(int initialSize) {
+    clearAll();
+    string inputA = INPUT_FILE_A, inputB = INPUT_FILE_B, output = TEMP_FILE_A; 
+
+    int positionA = 0, positionB = 0;
+    int size = initialSize;
+    divide(DATA_FILE, size);
+
+    while (!isFileEmpty(inputB)) {
+        if (output == TEMP_FILE_A) {
+            clear(TEMP_FILE_A);
+            clear(TEMP_FILE_B);
+        }
+        else {
+            clear(INPUT_FILE_A);
+            clear(INPUT_FILE_B);
+        }
+        while (positionA >= 0 || positionB >= 0) {
+            int countA = 0;
+            int countB = 0;
+
+            int valueA = read(inputA, positionA);
+            
+
+            int valueB = read(inputB, positionB);
+            if (positionB < 0) valueB = INT_MAX;
+
+            if ((positionA < 0) && (positionB < 0)) break;
+
+            for (int i = 0; i < size * 2; ++i) {
+                if ((valueA < valueB) && (positionA >= 0)) {
+                    write(output, valueA);
+                    valueA = (++countA >= size) ? INT_MAX : read(inputA, positionA);
+                    if (positionA < 0) valueB = INT_MAX;
+                }
+                else if (positionB >= 0) {
+                    write(output, valueB);
+                    valueB = (++countB >= size) ? INT_MAX : read(inputB, positionB);
+                    if (positionB < 0) valueB = INT_MAX;
+                }
+            }           
+            
+            output = (output == INPUT_FILE_A) ? INPUT_FILE_B : (output == INPUT_FILE_B) ? INPUT_FILE_A : (output == TEMP_FILE_A) ? TEMP_FILE_B : TEMP_FILE_A;
+        }
+        size *= 2;
+        positionA = positionB = 0;
+        if (inputA == INPUT_FILE_A) {
+            inputA = TEMP_FILE_A;
+            inputB = TEMP_FILE_B;
+            output = INPUT_FILE_A;
+        }
+        else {
+            inputA = INPUT_FILE_A;
+            inputB = INPUT_FILE_B;
+            output = TEMP_FILE_A;
+        }
+    }
+
+    clear(FINAL_OUTPUT_FILE);
+    ifstream fin((output == INPUT_FILE_A) ? TEMP_FILE_A : INPUT_FILE_A);
+    for (fin >> initialSize; !fin.eof(); fin >> initialSize)
+        write(FINAL_OUTPUT_FILE, initialSize);
+    clearAll();
+}
+
+//Основна функція програми для тестування алгоритму.
+int main() {
+    int size;
+    cout << "Enter size of memory: ";
+    cin >> size;
+    polyphaseMerge(size);
+
+    if (isSorted(FINAL_OUTPUT_FILE))
+        cout << "File is sorted correctly." << endl;
+    else
+        cout << "File is not sorted correctly." << endl;
+
+    return 0;
+}
