@@ -1,0 +1,33 @@
+.reviews-container {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    padding: 40px 0;
+    .review-card {
+        flex: 1;
+        background: #f5f5f5;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        .review-title {
+            font-size: 1.2em;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .review-text {
+            margin: 15px 0;
+            line-height: 1.6;
+        }
+        .review-rating {
+            font-weight: bold;
+            color: #007bff;
+        }
+    }
+}
+
+@media (max-width: 850px) {
+    .reviews-container{
+        display: flex;
+        flex-direction: column;
+    }
+}

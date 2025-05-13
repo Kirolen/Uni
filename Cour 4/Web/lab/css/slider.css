@@ -1,0 +1,182 @@
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes fadeOut {
+    from {
+        opacity: 1;
+    }
+    to {
+        opacity: 0;
+    }
+}
+
+.slider-container {
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    row-gap: 20px;
+    width: 100%;
+    background-color: beige;
+    padding: 15px 0;
+
+    .top {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        position: relative;
+
+        .arrow-left, .arrow-right {
+            padding: 15px;
+            cursor: pointer;
+            z-index: 2;
+            background-color: rgba(255, 255, 255, 0.7);
+            border: none;
+            border-radius: 50%;
+            font-size: 18px;
+            transition: background-color 0.3s ease;
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            
+            &:hover {
+                background-color: rgba(255, 255, 255, 0.9);
+            }
+        }
+        
+        .arrow-left {
+            left: 20px;
+        }
+        
+        .arrow-right {
+            right: 20px;
+        }
+
+        .slider {
+            width: 100%;
+            height: 400px;
+            position: relative;
+            overflow: hidden;
+
+            .slide {
+                position: absolute;
+                width: 100%;
+                height: 100%;
+                opacity: 0;
+                left: 50%;
+                transform: translateX(-50%);
+                object-fit: contain;
+            }
+
+            .slide.block {
+                animation: fadeIn 0.5s ease-in-out forwards;
+            }
+
+            .slide.fade-out {
+                animation: fadeOut 0.5s ease-in-out forwards;
+            }
+        }
+    }
+
+    #bottom {
+        display: flex;
+        gap: 25px;
+        padding-bottom: 5px;
+
+        .pagination-circle {
+            width: 25px;
+            height: 25px;
+            border: 2px solid orangered;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            
+            &:hover {
+                transform: scale(1.1);
+            }
+        }
+        
+        .pagination-circle.active {
+            background-color: deepskyblue;
+            transform: scale(1.1);
+        }
+    }
+}
+
+@media (max-width: 992px) {
+    .slider-container {
+        .top {
+            .slider {
+                height: 350px;
+            }
+        }
+    }
+}
+
+@media (max-width: 768px) {
+    .slider-container {
+        padding: 10px 0;
+        
+        .top {
+            .arrow-left, .arrow-right {
+                padding: 12px;
+                font-size: 16px;
+            }
+            
+            .slider {
+                height: 300px;
+            }
+        }
+        
+        #bottom {
+            gap: 20px;
+            
+            .pagination-circle {
+                width: 20px;
+                height: 20px;
+            }
+        }
+    }
+}
+
+@media (max-width: 480px) {
+    .slider-container {
+        padding: 8px 0;
+        row-gap: 15px;
+        
+        .top {
+            .arrow-left, .arrow-right {
+                padding: 10px;
+                font-size: 14px;
+            }
+            
+            .arrow-left {
+                left: 10px;
+            }
+            
+            .arrow-right {
+                right: 10px;
+            }
+            
+            .slider {
+                height: 250px;
+            }
+        }
+        
+        #bottom {
+            gap: 15px;
+            
+            .pagination-circle {
+                width: 15px;
+                height: 15px;
+                border-width: 1px;
+            }
+        }
+    }
+}
