@@ -1,0 +1,159 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+#include <math.h>
+#include <ctime>
+
+// Function for the Gauss-Seidel algoritm
+void ResultCalculation(double* pMatrix, int Size, double &Eps,
+int &Iterations) {
+    double dm, dmax,temp;
+    int i, j; // Loop variables
+    Iterations = 0;
+    
+    do {
+        dmax = 0;
+
+        for (i = 1; i < Size - 1; i++)
+            for(j = 1; j < Size - 1; j++) {
+                temp = pMatrix[Size * i + j];
+                pMatrix[Size * i + j] = 0.25 * (pMatrix[Size * i + j + 1] +
+                pMatrix[Size * i + j - 1] +
+                pMatrix[Size * (i + 1) + j] +
+                pMatrix[Size * (i - 1) + j]);
+                dm = fabs(pMatrix[Size * i + j] - temp);
+                if (dmax < dm) dmax = dm;
+            }
+
+        Iterations++;
+    } while (dmax > Eps);
+}
+// Function for computational process termination
+void ProcessTermination(double *pMatrix)
+{
+    delete[] pMatrix;
+}
+// Function for formatted matrix output
+void PrintMatrix(double *pMatrix, int RowCount, int ColCount)
+{
+    int i, j; // Loop variables
+    for (i = 0; i < RowCount; i++)
+    {
+        for (j = 0; j < ColCount; j++)
+            printf("%7.4f ", pMatrix[i * ColCount + j]);
+        printf("\n");
+    }
+}
+// Function for simple setting the grid node values
+void DummyDataInitialization(double *pMatrix, int Size)
+{
+    int i, j; // Loop variables
+    double h = 1.0 / (Size - 1);
+    // Setting the grid node values
+    for (i = 0; i < Size; i++)
+    {
+        for (j = 0; j < Size; j++)
+            if ((i == 0) || (i == Size - 1) || (j == 0) || (j == Size - 1))
+                pMatrix[i * Size + j] = 100;
+            else
+                pMatrix[i * Size + j] = 0;
+    }
+}
+// Function for memory allocation and initialization of grid nodes
+void ProcessInitialization(double *&pMatrix, int &Size, double &Eps, bool isTest)
+{
+    if (!isTest)
+    {
+        // Setting the grid size
+        do
+        {
+            printf("\nEnter the grid size: ");
+            scanf("%d", &Size);
+            printf("\nChosen grid size = %d", Size);
+            if (Size <= 2)
+                printf("\nSize of grid must be greater than 2!\n");
+        } while (Size <= 2);
+        // Setting the required accuracy
+        do
+        {
+            printf("\nEnter the required accuracy: ");
+            scanf("%lf", &Eps);
+            printf("\nChosen accuracy = %lf", Eps);
+            if (Eps <= 0)
+                printf("\nAccuracy must be greater than 0!\n");
+        } while (Eps <= 0);
+    }
+
+    // Memory allocation
+    pMatrix = new double[Size * Size];
+    // Setting the grid node values
+    DummyDataInitialization(pMatrix, Size);
+}
+
+int main()
+{
+    double *pMatrix; // Matrix of the grid nodes
+    int Size;        // Matrix size
+    int Iterations;  // Iteration number
+    int isTest;
+    time_t start, finish;
+    double duration = 0.0;
+    double Eps = 0.1;
+
+    printf("Serial Gauss - Seidel algorithm\n");
+    printf("Choose mode:\n");
+    printf("0 - default (user input)\n");
+    printf("1 - test mode (automatic sizes)\n");
+    scanf("%d", &isTest);
+
+    if (isTest)
+    {
+        int testSizes[] = {10, 100, 1000, 2000, 3000, 4000};
+        int numTests = sizeof(testSizes) / sizeof(testSizes[0]);
+        for (int i = 0; i < numTests; i++)
+        {
+            Size = testSizes[i];
+            printf("\n--- Test with Size = %d ---\n", Size);
+            // Process initialization
+            ProcessInitialization(pMatrix, Size, Eps, isTest);
+            // Matrix output
+            // printf("Initial Matrix: \n");
+            // PrintMatrix(pMatrix, Size, Size);
+            // The Gauss-Seidel method
+            start = clock();
+            ResultCalculation(pMatrix, Size, Eps, Iterations);
+            finish = clock();
+            duration = (finish - start) / double(CLOCKS_PER_SEC);
+            // Printing the result
+            printf("\n Number of iterations: %d\n", Iterations);
+            printf("Execution time for Size %d: %f seconds\n", Size, duration);
+            // printf("\n Result matrix: \n");
+            // PrintMatrix(pMatrix, Size, Size);
+            //  Computational process termination
+            ProcessTermination(pMatrix);
+        }
+        printf("Running test mode...\n");
+    }
+    else
+    {
+        // Process initialization
+        ProcessInitialization(pMatrix, Size, Eps, isTest);
+        // Matrix output
+        // printf("Initial Matrix: \n");
+        // PrintMatrix(pMatrix, Size, Size);
+        // The Gauss-Seidel method
+        start = clock();
+        ResultCalculation(pMatrix, Size, Eps, Iterations);
+        finish = clock();
+        duration = (finish - start) / double(CLOCKS_PER_SEC);
+        // Printing the result
+        printf("\n Number of iterations: %d\n", Iterations);
+        printf("Execution time for Size %d: %f seconds\n", Size, duration);
+        // printf("\n Result matrix: \n");
+        // PrintMatrix(pMatrix, Size, Size);
+        //  Computational process termination
+        ProcessTermination(pMatrix);
+    }
+
+    return 0;
+}
